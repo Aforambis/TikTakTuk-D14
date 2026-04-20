@@ -6,7 +6,7 @@ from .data import get_data
 
 
 def get_current_user(request):
-    role = request.GET.get("role") or request.session.get("active_role") or "admin"
+    role = request.GET.get("role") or request.POST.get("role") or request.session.get("active_role") or "admin"
     if role not in ["admin", "organizer", "customer"]:
         role = "admin"
     request.session["active_role"] = role
@@ -64,43 +64,80 @@ def dashboard(request):
     ticket_rows = filter_ticket_rows(build_ticket_rows(data), user)
 
     if user["role"] == "admin":
+        paid_orders = [o for o in data["orders"] if o["payment_status"] == "Lunas"]
+        pending_orders = [o for o in data["orders"] if o["payment_status"] == "Pending"]
+
         stats = [
-            {"label": "Total User", "value": 12},
-            {"label": "Total Venue", "value": len(data["venues"])},
-            {"label": "Total Revenue", "value": f'Rp {sum(o["total_amount"] for o in data["orders"]):,}'.replace(",", ".")},
-            {"label": "Total Organizer", "value": 2},
+            {"label": "Total User", "value": 12, "icon": "users", "trend": "12"},
+            {"label": "Total Acara", "value": len(data["events"]), "icon": "calendar", "trend": "8"},
+            {
+                "label": "Omzet Platform",
+                "value": "Rp {:.1f}M".format(sum(o["total_amount"] for o in paid_orders) / 1_000_000),
+                "icon": "trending-up",
+                "trend": "24",
+            },
+            {"label": "Promosi Aktif", "value": 3, "icon": "tag"},
         ]
-        recent_items = data["orders"]
+
+        context = {
+            "user": user,
+            "role": user["role"],
+            "current_page": "dashboard",
+            "stats": stats,
+            "venue_count": len(data["venues"]),
+            "reserved_venue_count": sum(1 for v in data["venues"] if v.get("has_reserved_seating")),
+            "event_count": len(data["events"]),
+            "paid_order_count": len(paid_orders),
+            "pending_order_count": len(pending_orders),
+        }
 
     elif user["role"] == "organizer":
         own_events = [e for e in data["events"] if e["organizer_id"] == user["organizer_id"]]
         own_orders = [o for o in data["orders"] if o["organizer_id"] == user["organizer_id"]]
+        paid_own = [o for o in own_orders if o["payment_status"] == "Lunas"]
 
         stats = [
-            {"label": "Total Event", "value": len(own_events)},
-            {"label": "Tiket Terjual", "value": len(ticket_rows)},
-            {"label": "Revenue", "value": f'Rp {sum(o["total_amount"] for o in own_orders):,}'.replace(",", ".")},
-            {"label": "Venue Aktif", "value": len({e["venue_id"] for e in own_events})},
+            {"label": "Total Event", "value": len(own_events), "icon": "calendar"},
+            {"label": "Tiket Terjual", "value": len(ticket_rows), "icon": "ticket"},
+            {
+                "label": "Revenue",
+                "value": "Rp {:.1f}M".format(sum(o["total_amount"] for o in paid_own) / 1_000_000),
+                "icon": "trending-up",
+            },
+            {"label": "Venue Aktif", "value": len({e["venue_id"] for e in own_events}), "icon": "map-pin"},
         ]
-        recent_items = own_events
 
-    else:
+        context = {
+            "user": user,
+            "role": user["role"],
+            "current_page": "dashboard",
+            "stats": stats,
+            "event_count": len(own_events),
+            "recent_items": own_events,
+        }
+
+    else:  # customer
         own_orders = [o for o in data["orders"] if o["customer_id"] == user["customer_id"]]
 
         stats = [
-            {"label": "Tiket Saya", "value": len(ticket_rows)},
-            {"label": "Event Diikuti", "value": len({t["event_id"] for t in ticket_rows})},
-            {"label": "Transaksi", "value": len(own_orders)},
-            {"label": "Pengeluaran", "value": f'Rp {sum(o["total_amount"] for o in own_orders):,}'.replace(",", ".")},
+            {"label": "Tiket Saya", "value": len(ticket_rows), "icon": "ticket"},
+            {"label": "Event Diikuti", "value": len({t["event_id"] for t in ticket_rows}), "icon": "music"},
+            {"label": "Transaksi", "value": len(own_orders), "icon": "shopping-bag"},
+            {
+                "label": "Pengeluaran",
+                "value": "Rp {:.1f}M".format(sum(o["total_amount"] for o in own_orders) / 1_000_000),
+                "icon": "credit-card",
+            },
         ]
-        recent_items = own_orders
 
-    context = {
-        "user": user,
-        "stats": stats,
-        "recent_items": recent_items,
-        "page_title": "Dashboard",
-    }
+        context = {
+            "user": user,
+            "role": user["role"],
+            "current_page": "dashboard",
+            "stats": stats,
+            "recent_items": ticket_rows,
+        }
+
     return render(request, "main/dashboard.html", context)
 
 
@@ -129,6 +166,8 @@ def seats_page(request):
 
     context = {
         "user": user,
+        "role": user["role"],
+        "current_page": "kursi",
         "page_title": "Manajemen Kursi",
         "rows": rows,
         "total_count": len(all_rows),
@@ -136,6 +175,7 @@ def seats_page(request):
         "used_count": counts.get("Terisi", 0),
         "q": request.GET.get("q", ""),
         "status": status,
+        "all_venues": data["venues"],
     }
     return render(request, "main/seats.html", context)
 
@@ -146,6 +186,8 @@ def tickets_page(request):
     rows = filter_ticket_rows(build_ticket_rows(data), user)
 
     q = request.GET.get("q", "").strip().lower()
+    status_filter = request.GET.get("status_filter", "Semua")
+
     if q:
         rows = [
             r for r in rows
@@ -153,14 +195,26 @@ def tickets_page(request):
             or q in r["event_title"].lower()
         ]
 
+    if status_filter and status_filter != "Semua":
+        rows = [r for r in rows if r.get("status") == status_filter]
+
+    all_rows_for_stats = filter_ticket_rows(build_ticket_rows(data), user)
+    valid_count = sum(1 for r in all_rows_for_stats if r.get("status") == "Valid")
+    used_count = sum(1 for r in all_rows_for_stats if r.get("status") == "Used")
+
     context = {
         "user": user,
+        "role": user["role"],
+        "current_page": "tiket",
         "page_title": "Manajemen Tiket" if user["role"] != "customer" else "Tiket Saya",
         "rows": rows,
-        "total_count": len(rows),
-        "event_count": len({r["event_id"] for r in rows}),
-        "seat_count": sum(1 for r in rows if r["seat_label"] != "Tanpa kursi"),
+        "total_count": len(all_rows_for_stats),
+        "valid_count": valid_count,
+        "used_count": used_count,
         "q": request.GET.get("q", ""),
+        "status_filter": status_filter,
+        "all_orders": data["orders"],
+        "all_categories": data["ticket_categories"],
     }
     return render(request, "main/tickets.html", context)
 
