@@ -1,0 +1,187 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f3f7fb;
+  color: #16202a;
+}
+
+a {
+  text-decoration: none;
+}
+
+.layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 250px;
+  background: #0d1b3f;
+  color: white;
+  padding: 24px 18px;
+}
+
+.brand {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+.sidebar nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 18px 0;
+}
+
+.sidebar nav a,
+.role-switcher a {
+  color: white;
+  padding: 10px 12px;
+  border-radius: 10px;
+  display: block;
+  background: rgba(255,255,255,0.08);
+  margin-bottom: 8px;
+}
+
+.role-box {
+  background: rgba(255,255,255,0.09);
+  padding: 14px;
+  border-radius: 12px;
+}
+
+.role-label,
+.muted {
+  color: #778399;
+  font-size: 14px;
+}
+
+.role-value {
+  font-weight: 700;
+  margin-top: 6px;
+}
+
+.content {
+  flex: 1;
+  padding: 28px;
+}
+
+.topbar {
+  margin-bottom: 24px;
+}
+
+.topbar h1 {
+  margin: 0 0 6px;
+}
+
+.card {
+  background: white;
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 8px 24px rgba(13, 27, 63, 0.06);
+  margin-bottom: 20px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  min-height: 105px;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  margin-top: 10px;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.toolbar-form {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+input,
+select,
+button {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #d5dce7;
+}
+
+button {
+  cursor: pointer;
+  background: white;
+}
+
+.btn-primary {
+  background: #2d6df6;
+  color: white;
+  border-color: #2d6df6;
+}
+
+.btn-danger {
+  color: #d32f2f;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 12px 10px;
+  border-bottom: 1px solid #edf1f7;
+  text-align: left;
+  font-size: 14px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.badge.success {
+  background: #e7f7ec;
+  color: #1f8d4d;
+}
+
+.badge.warning {
+  background: #fff2df;
+  color: #b37400;
+}
+
+@media (max-width: 900px) {
+  .layout {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+  }
+
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

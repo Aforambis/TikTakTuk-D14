@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="stats-grid">
+  <div class="card stat-card">
+    <div class="muted">Total Kursi</div>
+    <div class="stat-value">{{ total_count }}</div>
+  </div>
+  <div class="card stat-card">
+    <div class="muted">Tersedia</div>
+    <div class="stat-value">{{ available_count }}</div>
+  </div>
+  <div class="card stat-card">
+    <div class="muted">Terisi</div>
+    <div class="stat-value">{{ used_count }}</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="toolbar">
+    <form method="get" class="toolbar-form">
+      <input type="hidden" name="role" value="{{ user.role }}">
+      <input type="text" name="q" value="{{ q }}" placeholder="Cari section, row, no kursi, venue...">
+
+      <select name="status">
+        <option value="">Semua status</option>
+        <option value="Tersedia" {% if status == 'Tersedia' %}selected{% endif %}>Tersedia</option>
+        <option value="Terisi" {% if status == 'Terisi' %}selected{% endif %}>Terisi</option>
+      </select>
+
+      <button type="submit">Filter</button>
+    </form>
+
+    {% if user.role == 'admin' or user.role == 'organizer' %}
+      <button class="btn-primary" type="button">Tambah Kursi</button>
+    {% endif %}
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Section</th>
+        <th>Baris</th>
+        <th>No. Kursi</th>
+        <th>Venue</th>
+        <th>Status</th>
+        {% if user.role == 'admin' or user.role == 'organizer' %}<th>Action</th>{% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>
+        <td>{{ row.section }}</td>
+        <td>{{ row.row_number }}</td>
+        <td>{{ row.seat_number }}</td>
+        <td>{{ row.venue_name }}</td>
+        <td>
+          {% if row.status == 'Tersedia' %}
+            <span class="badge success">{{ row.status }}</span>
+          {% else %}
+            <span class="badge warning">{{ row.status }}</span>
+          {% endif %}
+        </td>
+
+        {% if user.role == 'admin' or user.role == 'organizer' %}
+        <td>
+          <button type="button">Edit</button>
+          {% if row.status == 'Terisi' %}
+            <button type="button" disabled>Hapus</button>
+          {% else %}
+            <button type="button" class="btn-danger">Hapus</button>
+          {% endif %}
+        </td>
+        {% endif %}
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="6">Belum ada data kursi.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

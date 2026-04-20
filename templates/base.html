@@ -1,0 +1,46 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ page_title }} | TikTakTuk</title>
+  <link rel="stylesheet" href="{% static 'main.css' %}">
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand">TikTakTuk</div>
+
+      <div class="role-box">
+        <div class="role-label">Role aktif</div>
+        <div class="role-value">{{ user.role|title }}</div>
+      </div>
+
+      <nav>
+        <a href="{% url 'main:dashboard' %}?role={{ user.role }}">Dashboard</a>
+        <a href="{% url 'main:tickets' %}?role={{ user.role }}">Tiket</a>
+        <a href="{% url 'main:seats' %}?role={{ user.role }}">Seat</a>
+      </nav>
+
+      <div class="role-switcher">
+        <div class="muted">Ganti preview role</div>
+        <a href="?role=admin">Admin</a>
+        <a href="?role=organizer">Organizer</a>
+        <a href="?role=customer">Customer</a>
+      </div>
+    </aside>
+
+    <main class="content">
+      <header class="topbar">
+        <div>
+          <h1>{{ page_title }}</h1>
+          <p>{{ user.name }}</p>
+        </div>
+      </header>
+
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</body>
+</html>

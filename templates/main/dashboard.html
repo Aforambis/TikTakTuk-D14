@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="stats-grid">
+  {% for stat in stats %}
+    <div class="card stat-card">
+      <div class="muted">{{ stat.label }}</div>
+      <div class="stat-value">{{ stat.value }}</div>
+    </div>
+  {% endfor %}
+</div>
+
+<div class="card">
+  {% if user.role == 'admin' %}
+    <h2>Ringkasan Order Sistem</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Order ID</th>
+          <th>Customer</th>
+          <th>Event</th>
+          <th>Status</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in recent_items %}
+        <tr>
+          <td>{{ item.order_id }}</td>
+          <td>{{ item.customer_name }}</td>
+          <td>{{ item.event_title }}</td>
+          <td>{{ item.payment_status }}</td>
+          <td>Rp {{ item.total_amount }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+  {% elif user.role == 'organizer' %}
+    <h2>Performa Acara</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Event</th>
+          <th>Tanggal</th>
+          <th>Venue</th>
+          <th>Organizer</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in recent_items %}
+        <tr>
+          <td>{{ item.event_title }}</td>
+          <td>{{ item.event_datetime }}</td>
+          <td>{{ item.venue_name }}</td>
+          <td>{{ item.organizer_name }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+  {% else %}
+    <h2>Riwayat Pesanan</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Order ID</th>
+          <th>Tanggal</th>
+          <th>Status</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in recent_items %}
+        <tr>
+          <td>{{ item.order_id }}</td>
+          <td>{{ item.order_date }}</td>
+          <td>{{ item.payment_status }}</td>
+          <td>Rp {{ item.total_amount }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+</div>
+{% endblock %}

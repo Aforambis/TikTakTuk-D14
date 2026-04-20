@@ -1,5 +1,19 @@
+# Python environment
+env/
 venv/
-*.pyc
+.env
+
+# Python cache
 __pycache__/
+*.py[cod]
+*$py.class
+
+# Django database bawaan (Sangat penting agar tidak ikut ter-upload ke GitHub)
 db.sqlite3
+
+# Static files (jika nanti menggunakan collectstatic)
+staticfiles/
+
+# OS specific files
 .DS_Store
+Thumbs.db
