@@ -20,7 +20,7 @@
     </div>
 
     <!-- Stat Cards -->
-    <div class="grid gap-4 sm:grid-cols-2">
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {% for stat in stats %}
       <div class="bg-white rounded-2xl border border-gray-100 p-5 flex items-center gap-4 hover:shadow-md transition-shadow">
         <div class="bg-indigo-100 w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -35,6 +35,47 @@
         {% endif %}
       </div>
       {% endfor %}
+    </div>
+
+    <!-- Admin Quick Actions -->
+    <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+
+      <a href="{% url 'my_events' %}"
+        class="group rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+        <div class="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+          <i data-lucide="calendar-days" class="h-5 w-5"></i>
+        </div>
+        <p class="font-bold text-slate-900">Manajemen Event</p>
+        <p class="mt-1 text-xs leading-5 text-slate-500">Kelola data event, venue, dan organizer.</p>
+      </a>
+
+      <a href="{% url 'order_list' %}"
+        class="group rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+        <div class="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+          <i data-lucide="receipt" class="h-5 w-5"></i>
+        </div>
+        <p class="font-bold text-slate-900">Order</p>
+        <p class="mt-1 text-xs leading-5 text-slate-500">Pantau transaksi dan status pembayaran.</p>
+      </a>
+
+      <a href="{% url 'promotions' %}"
+        class="group rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+        <div class="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+          <i data-lucide="badge-percent" class="h-5 w-5"></i>
+        </div>
+        <p class="font-bold text-slate-900">Promosi</p>
+        <p class="mt-1 text-xs leading-5 text-slate-500">Fitur baru hasil merge untuk kelola promo.</p>
+      </a>
+
+      <a href="{% url 'logout' %}"
+        class="group rounded-2xl border border-red-100 bg-red-50 p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+        <div class="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-white text-red-600">
+          <i data-lucide="log-out" class="h-5 w-5"></i>
+        </div>
+        <p class="font-bold text-red-700">Logout</p>
+        <p class="mt-1 text-xs leading-5 text-red-500">Keluar dari sesi role aktif.</p>
+      </a>
+
     </div>
 
     <!-- Charts Row -->
@@ -100,7 +141,7 @@
     </div>
 
     <!-- Stat Cards -->
-    <div class="grid gap-4 sm:grid-cols-2">
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {% for stat in stats %}
       <div class="bg-white rounded-2xl border border-gray-100 p-5 flex items-center gap-4 hover:shadow-md transition-shadow">
         <div class="bg-teal-100 w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -112,6 +153,38 @@
         </div>
       </div>
       {% endfor %}
+    </div>
+
+    <!-- Organizer Quick Actions -->
+    <div class="grid gap-4 md:grid-cols-3">
+
+      <a href="{% url 'event_create' %}"
+        class="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+        <div class="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-teal-50 text-teal-600">
+          <i data-lucide="plus" class="h-5 w-5"></i>
+        </div>
+        <p class="font-bold text-slate-900">Buat Event</p>
+        <p class="mt-1 text-xs leading-5 text-slate-500">Tambah event baru untuk organizer aktif.</p>
+      </a>
+
+      <a href="{% url 'order_list' %}"
+        class="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+        <div class="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+          <i data-lucide="receipt" class="h-5 w-5"></i>
+        </div>
+        <p class="font-bold text-slate-900">Order Event</p>
+        <p class="mt-1 text-xs leading-5 text-slate-500">Pantau order dari event yang dikelola.</p>
+      </a>
+
+      <a href="{% url 'promotions' %}"
+        class="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+        <div class="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+          <i data-lucide="badge-percent" class="h-5 w-5"></i>
+        </div>
+        <p class="font-bold text-slate-900">Lihat Promo</p>
+        <p class="mt-1 text-xs leading-5 text-slate-500">Cek promo aktif yang tersedia di platform.</p>
+      </a>
+
     </div>
 
     <!-- My Events -->
@@ -156,7 +229,7 @@
     </div>
 
     <!-- Stat Cards -->
-    <div class="grid gap-4 sm:grid-cols-2">
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {% for stat in stats %}
       <div class="bg-white rounded-2xl border border-gray-100 p-5 flex items-center gap-4 hover:shadow-md transition-shadow">
         <div class="bg-blue-100 w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -170,6 +243,37 @@
       {% endfor %}
     </div>
 
+    <!-- Customer Quick Actions -->
+    <div class="grid gap-4 md:grid-cols-3">
+
+      <a href="{% url 'event_list' %}"
+        class="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+        <div class="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+          <i data-lucide="calendar-search" class="h-5 w-5"></i>
+        </div>
+        <p class="font-bold text-slate-900">Cari Event</p>
+        <p class="mt-1 text-xs leading-5 text-slate-500">Temukan event dan lakukan checkout tiket.</p>
+      </a>
+
+      <a href="{% url 'order_list' %}"
+        class="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+        <div class="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+          <i data-lucide="shopping-bag" class="h-5 w-5"></i>
+        </div>
+        <p class="font-bold text-slate-900">Pesanan Saya</p>
+        <p class="mt-1 text-xs leading-5 text-slate-500">Lihat riwayat order dan status pembayaran.</p>
+      </a>
+
+      <a href="{% url 'promotions' %}"
+        class="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+        <div class="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+          <i data-lucide="badge-percent" class="h-5 w-5"></i>
+        </div>
+        <p class="font-bold text-slate-900">Promo Tiket</p>
+        <p class="mt-1 text-xs leading-5 text-slate-500">Gunakan promo saat checkout tiket.</p>
+      </a>
+    </div>
+    
     <!-- Upcoming Tickets -->
     <div class="bg-white rounded-2xl border border-gray-100 p-5">
       <div class="flex justify-between items-center mb-4">

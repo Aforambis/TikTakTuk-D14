@@ -29,13 +29,6 @@ class Role(models.Model):
 
 
 class AccountRole(models.Model):
-    """
-    Join table between UserAccount and Role.
-
-    Spec uses a composite PK (role_id, user_id). We model it with a UUID PK
-    and enforce uniqueness via a constraint.
-    """
-
     account_role_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     role = models.ForeignKey(Role, on_delete=models.CASCADE, related_name="account_roles")
     user = models.ForeignKey(UserAccount, on_delete=models.CASCADE, related_name="account_roles")
@@ -105,7 +98,6 @@ class Seat(models.Model):
     class Meta:
         db_table = "seat"
         constraints = [
-            # Narasi: Seat unik oleh (venue, section, row_number, seat_number)
             UniqueConstraint(
                 fields=["venue", "section", "row_number", "seat_number"],
                 name="uq_seat_venue_section_row_seatnum",
@@ -143,13 +135,6 @@ class Artist(models.Model):
 
 
 class EventArtist(models.Model):
-    """
-    Join table between Event and Artist.
-
-    Spec uses a composite PK (event_id, artist_id). We model it with a UUID PK
-    and enforce uniqueness via a constraint.
-    """
-
     event_artist_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     event = models.ForeignKey(Event, on_delete=models.CASCADE, related_name="event_artists")
     artist = models.ForeignKey(Artist, on_delete=models.CASCADE, related_name="event_artists")
@@ -205,6 +190,9 @@ class Order(models.Model):
     class Meta:
         db_table = "order"
 
+    def __str__(self) -> str:
+        return f"Order {self.order_id} - {self.payment_status}"
+
 
 class Promotion(models.Model):
     class DiscountType(models.TextChoices):
@@ -229,7 +217,10 @@ class Promotion(models.Model):
     class Meta:
         db_table = "promotion"
         constraints = [
-            CheckConstraint(condition=Q(end_date__gte=F("start_date")), name="ck_promotion_end_gte_start"),
+            CheckConstraint(
+                condition=Q(end_date__gte=F("start_date")),
+                name="ck_promotion_end_gte_start",
+            ),
         ]
 
     def __str__(self) -> str:
@@ -247,6 +238,9 @@ class OrderPromotion(models.Model):
             UniqueConstraint(fields=["promotion", "order"], name="uq_order_promotion_promotion_order"),
         ]
 
+    def __str__(self) -> str:
+        return f"{self.promotion.promo_code} → {self.order.order_id}"
+
 
 class Ticket(models.Model):
     ticket_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -262,14 +256,6 @@ class Ticket(models.Model):
 
 
 class HasRelationship(models.Model):
-    """
-    Join table between Seat and Ticket.
-
-    Spec uses a composite PK (seat_id, ticket_id). We model it with a UUID PK
-    and enforce uniqueness via constraints. Additionally, per narasi, a seat can
-    only be assigned to one ticket at a time.
-    """
-
     has_relationship_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     seat = models.ForeignKey(Seat, on_delete=models.CASCADE, related_name="seat_relationships")
     ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name="seat_relationships")
@@ -280,3 +266,6 @@ class HasRelationship(models.Model):
             UniqueConstraint(fields=["seat", "ticket"], name="uq_has_relationship_seat_ticket"),
             UniqueConstraint(fields=["seat"], name="uq_has_relationship_seat_once"),
         ]
+
+    def __str__(self) -> str:
+        return f"{self.seat} - {self.ticket.ticket_code}"
