@@ -6,12 +6,13 @@ urlpatterns = [
     # Public / auth
     path("", views.landing_page, name="landing_page"),
     path("login/", views.login_view, name="login"),
+    path("register/", views.register_view, name="register"),
     path("logout/", views.logout_view, name="logout"),
 
     # Dashboard
     path("dashboard/", views.dashboard, name="dashboard"),
 
-    # Demo role switcher
+    # Legacy role endpoint (tidak lagi mengganti role langsung)
     path("set-role/<str:role_name>/", views.set_role, name="set_role"),
 
     # Tickets

@@ -17,29 +17,79 @@ from .data import get_data
 
 
 ALLOWED_ROLES = {"guest", "admin", "organizer", "customer"}
+LOGIN_ROLES = {"admin", "organizer", "customer"}
 
 
 # =========================================================
 # Auth + role helpers
 # =========================================================
 
+def _authenticate_dummy_account(request, username: str, password: str):
+    username = (username or "").strip()
+    password = (password or "").strip()
+
+    if not username or not password:
+        return None
+
+    data = get_data()
+    credentials = data.get("user_credentials", {})
+    registered_accounts = request.session.get("registered_accounts", {})
+    credentials = {**credentials, **registered_accounts}
+
+    # Username dibuat case-insensitive agar input seperti "Admin" tetap valid.
+    for stored_username, account in credentials.items():
+        if stored_username.lower() != username.lower():
+            continue
+
+        if account.get("password") != password:
+            return None
+
+        role = str(account.get("role", "customer")).strip().lower()
+        if role not in LOGIN_ROLES:
+            return None
+
+        return {
+            "username": stored_username,
+            "role": role,
+            "name": account.get("name") or stored_username,
+        }
+
+    return None
+
+
+
+def _clear_auth_session(request):
+    for key in ("role", "username", "display_name", "organizer_id", "customer_id"):
+        request.session.pop(key, None)
+
+
+def _username_exists(request, username: str) -> bool:
+    username = (username or "").strip().lower()
+    if not username:
+        return False
+
+    credentials = get_data().get("user_credentials", {})
+    registered_accounts = request.session.get("registered_accounts", {})
+
+    return any(stored_username.lower() == username for stored_username in credentials) or any(
+        stored_username.lower() == username for stored_username in registered_accounts
+    )
+
 def login_view(request):
-    if request.session.get("role") in {"admin", "organizer", "customer"}:
+    if _current_role(request) in LOGIN_ROLES:
         return redirect("dashboard")
 
     if request.method == "POST":
         username = request.POST.get("username", "").strip()
         password = request.POST.get("password", "").strip()
 
-        data = get_data()
-        creds = data.get("user_credentials", {})
+        account = _authenticate_dummy_account(request, username, password)
 
-        if username in creds and creds[username].get("password") == password:
-            role = creds[username].get("role", "customer")
-
-            request.session["role"] = role
-            request.session["active_role"] = role
-            request.session["username"] = username
+        if account:
+            _clear_auth_session(request)
+            request.session["role"] = account["role"]
+            request.session["username"] = account["username"]
+            request.session["display_name"] = account["name"]
 
             return redirect("dashboard")
 
@@ -48,12 +98,79 @@ def login_view(request):
     return render(request, "main/login.html")
 
 
+
+def _validate_registration_form(request):
+    selected_role = (request.POST.get("role") or "customer").strip().lower()
+    required_fields = ["role", "full_name", "email", "phone_number", "username"]
+    password = request.POST.get("password", "")
+    confirm_password = request.POST.get("confirm_password", "")
+    terms = request.POST.get("terms")
+
+    if selected_role not in LOGIN_ROLES:
+        return selected_role, "Pilih role akun yang valid."
+
+    if any(not (request.POST.get(field) or "").strip() for field in required_fields):
+        return selected_role, "Harap mengisi semua field."
+
+    username = request.POST.get("username", "").strip()
+    if _username_exists(request, username):
+        return selected_role, "Username sudah digunakan. Pilih username lain."
+
+    if not password or not confirm_password:
+        return selected_role, "Password dan konfirmasi password wajib diisi."
+
+    if password != confirm_password:
+        return selected_role, "Konfirmasi password tidak sesuai."
+
+    if not terms:
+        return selected_role, "Anda harus menyetujui Syarat & Ketentuan."
+
+    return selected_role, None
+
+
+def register_view(request):
+    if _current_role(request) in LOGIN_ROLES:
+        return redirect("dashboard")
+
+    selected_role = (request.GET.get("role") or request.POST.get("role") or "customer").strip().lower()
+    if selected_role not in LOGIN_ROLES:
+        selected_role = "customer"
+
+    if request.method == "POST":
+        selected_role, error = _validate_registration_form(request)
+
+        if error:
+            messages.error(request, error)
+        else:
+            username = request.POST.get("username", "").strip()
+            registered_accounts = request.session.get("registered_accounts", {})
+            registered_accounts[username] = {
+                "password": request.POST.get("password", ""),
+                "role": selected_role,
+                "name": request.POST.get("full_name", "").strip() or username,
+            }
+            request.session["registered_accounts"] = registered_accounts
+            request.session.modified = True
+            messages.success(request, "Registrasi berhasil. Silakan login dengan akun yang sudah dibuat.")
+            return redirect("login")
+
+    return render(
+        request,
+        "main/register.html",
+        {
+            "selected_role": selected_role,
+        },
+    )
+
 def logout_view(request):
-    request.session.flush()
+    _clear_auth_session(request)
+    messages.info(request, "Anda berhasil logout.")
     return redirect("login")
 
 
 def set_role(request, role_name: str):
+    # Endpoint lama dipertahankan agar URL tidak error, tetapi tidak lagi
+    # mengubah role secara langsung. Role hanya berubah lewat login.
     role_name = (role_name or "").strip().lower()
 
     if role_name not in ALLOWED_ROLES:
@@ -61,19 +178,23 @@ def set_role(request, role_name: str):
             f"Invalid role '{role_name}'. Allowed: {', '.join(sorted(ALLOWED_ROLES))}"
         )
 
-    request.session["role"] = role_name
-    request.session["active_role"] = role_name
+    current_role = _current_role(request)
 
-    return redirect(request.META.get("HTTP_REFERER", "/"))
+    if role_name == current_role:
+        return redirect(request.META.get("HTTP_REFERER", "/"))
+
+    _clear_auth_session(request)
+
+    if role_name == "guest":
+        messages.info(request, "Anda sudah keluar dari akun. Mode guest aktif.")
+        return redirect("landing_page")
+
+    messages.info(request, f"Silakan login dengan akun {role_name} untuk memakai role tersebut.")
+    return redirect("login")
 
 
 def _current_role(request) -> str:
-    role = (
-        request.session.get("role")
-        or request.session.get("active_role")
-        or "guest"
-    )
-    role = str(role).strip().lower()
+    role = str(request.session.get("role", "guest")).strip().lower()
 
     return role if role in ALLOWED_ROLES else "guest"
 
@@ -87,15 +208,15 @@ def _get_current_user_for_dummy_pages(request):
     role = _current_role(request)
 
     if role == "guest":
-        role = "admin"
+        return {"role": "guest", "name": "Guest"}
 
     data = get_data()
     users = data.get("users", {})
 
-    if role not in users:
-        role = "admin"
-
-    return users[role]
+    user = users.get(role, {"role": role, "name": request.session.get("display_name", role.title())}).copy()
+    if request.session.get("display_name"):
+        user["name"] = request.session.get("display_name")
+    return user
 
 
 def get_current_user(request):
@@ -384,6 +505,8 @@ def dashboard(request):
 # =========================================================
 
 def seats_page(request):
+    _require_roles(request, {"admin", "organizer", "customer"})
+
     data = get_data()
     user = _get_current_user_for_dummy_pages(request)
     rows = _build_seat_rows(data)
@@ -425,14 +548,17 @@ def seats_page(request):
 
 
 def create_seat(request):
+    _require_roles(request, {"admin", "organizer"})
     return redirect("seats")
 
 
 def update_seat(request, seat_id):
+    _require_roles(request, {"admin", "organizer"})
     return redirect("seats")
 
 
 def delete_seat(request, seat_id):
+    _require_roles(request, {"admin", "organizer"})
     return redirect("seats")
 
 
@@ -441,6 +567,8 @@ def delete_seat(request, seat_id):
 # =========================================================
 
 def tickets_page(request):
+    _require_roles(request, {"admin", "organizer", "customer"})
+
     data = get_data()
     user = _get_current_user_for_dummy_pages(request)
     rows = _filter_ticket_rows(_build_ticket_rows(data), user)
@@ -491,14 +619,17 @@ def tickets_page(request):
 
 
 def create_ticket(request):
+    _require_roles(request, {"admin", "organizer"})
     return redirect("tickets")
 
 
 def update_ticket(request, ticket_id):
+    _require_roles(request, {"admin", "organizer"})
     return redirect("tickets")
 
 
 def delete_ticket(request, ticket_id):
+    _require_roles(request, {"admin", "organizer"})
     return redirect("tickets")
 
 

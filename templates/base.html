@@ -23,13 +23,41 @@
             background: #cbd5e1;
             border-radius: 999px;
         }
+
+        /* Role-based navbar theme */
+        body[data-role="organizer"] .tt-logo-mark,
+        body[data-role="organizer"] .nav-scroll a.bg-indigo-600 {
+            background-color: #0d9488 !important;
+        }
+
+        body[data-role="admin"] .tt-logo-mark,
+        body[data-role="admin"] .nav-scroll a.bg-indigo-600 {
+            background-color: #7c3aed !important;
+        }
+
+        body[data-role="customer"] .tt-logo-mark,
+        body[data-role="customer"] .nav-scroll a.bg-indigo-600 {
+            background-color: #2563eb !important;
+        }
+
+        body[data-role="guest"] .tt-logo-mark,
+        body[data-role="guest"] .nav-scroll a.bg-indigo-600 {
+            background-color: #64748b !important;
+        }
+
+        body[data-role="organizer"] .nav-scroll a.bg-indigo-600,
+        body[data-role="admin"] .nav-scroll a.bg-indigo-600,
+        body[data-role="customer"] .nav-scroll a.bg-indigo-600,
+        body[data-role="guest"] .nav-scroll a.bg-indigo-600 {
+            color: #ffffff !important;
+        }
     </style>
 
     {% block extra_head %}{% endblock %}
 </head>
 
 {% with active_role=role|default:current_role|default:"guest" active_url=request.resolver_match.url_name %}
-<body class="min-h-screen bg-slate-50 text-slate-800 flex flex-col">
+<body data-role="{{ active_role }}" class="min-h-screen bg-slate-50 text-slate-800 flex flex-col">
 
     <!-- Navbar -->
     <nav class="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur shadow-sm">
@@ -41,7 +69,7 @@
                 <!-- Logo -->
                 <a href="{% if active_role == 'guest' %}{% url 'landing_page' %}{% else %}{% url 'dashboard' %}{% endif %}"
                    class="flex shrink-0 items-center gap-3">
-                    <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-600 shadow-sm">
+                    <div class="tt-logo-mark flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-600 shadow-sm">
                         <span class="text-xs font-black tracking-wider text-white">TT</span>
                     </div>
 
@@ -69,78 +97,21 @@
                         </a>
                     {% endif %}
 
-                    <!-- Role Dropdown -->
-                    <div class="relative" id="roleDropdownWrapper">
-                        <button
-                            type="button"
-                            onclick="toggleRoleDropdown()"
-                            class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
-                        >
-                            {% if active_role == 'admin' %}
-                                <span class="flex h-5 w-5 items-center justify-center rounded-lg bg-indigo-600 text-[9px] font-bold text-white">AD</span>
-                                <span>Admin</span>
-                            {% elif active_role == 'organizer' %}
-                                <span class="flex h-5 w-5 items-center justify-center rounded-lg bg-teal-600 text-[9px] font-bold text-white">OR</span>
-                                <span>Organizer</span>
-                            {% elif active_role == 'customer' %}
-                                <span class="flex h-5 w-5 items-center justify-center rounded-lg bg-blue-600 text-[9px] font-bold text-white">CU</span>
-                                <span>Customer</span>
-                            {% else %}
-                                <span class="flex h-5 w-5 items-center justify-center rounded-lg bg-slate-500 text-[9px] font-bold text-white">GU</span>
-                                <span>Guest</span>
-                            {% endif %}
-
-                            <i data-lucide="chevron-down" class="h-4 w-4 text-slate-400"></i>
-                        </button>
-
-                        <div
-                            id="roleDropdown"
-                            class="hidden absolute right-0 mt-2 w-52 rounded-2xl border border-slate-100 bg-white p-2 shadow-xl"
-                        >
-                            <p class="px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-slate-400">
-                                Ganti Role Demo
-                            </p>
-
-                            <a href="{% url 'set_role' 'guest' %}"
-                               class="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition
-                               {% if active_role == 'guest' %}bg-slate-100 text-slate-900{% else %}text-slate-600 hover:bg-slate-50{% endif %}">
-                                <span class="flex h-5 w-5 items-center justify-center rounded-lg bg-slate-500 text-[9px] font-bold text-white">GU</span>
-                                Guest
-                                {% if active_role == 'guest' %}
-                                    <i data-lucide="check" class="ml-auto h-3.5 w-3.5"></i>
-                                {% endif %}
-                            </a>
-
-                            <a href="{% url 'set_role' 'admin' %}"
-                               class="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition
-                               {% if active_role == 'admin' %}bg-indigo-50 text-indigo-700{% else %}text-slate-600 hover:bg-slate-50{% endif %}">
-                                <span class="flex h-5 w-5 items-center justify-center rounded-lg bg-indigo-600 text-[9px] font-bold text-white">AD</span>
-                                Admin
-                                {% if active_role == 'admin' %}
-                                    <i data-lucide="check" class="ml-auto h-3.5 w-3.5"></i>
-                                {% endif %}
-                            </a>
-
-                            <a href="{% url 'set_role' 'organizer' %}"
-                               class="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition
-                               {% if active_role == 'organizer' %}bg-teal-50 text-teal-700{% else %}text-slate-600 hover:bg-slate-50{% endif %}">
-                                <span class="flex h-5 w-5 items-center justify-center rounded-lg bg-teal-600 text-[9px] font-bold text-white">OR</span>
-                                Organizer
-                                {% if active_role == 'organizer' %}
-                                    <i data-lucide="check" class="ml-auto h-3.5 w-3.5"></i>
-                                {% endif %}
-                            </a>
-
-                            <a href="{% url 'set_role' 'customer' %}"
-                               class="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition
-                               {% if active_role == 'customer' %}bg-blue-50 text-blue-700{% else %}text-slate-600 hover:bg-slate-50{% endif %}">
-                                <span class="flex h-5 w-5 items-center justify-center rounded-lg bg-blue-600 text-[9px] font-bold text-white">CU</span>
-                                Customer
-                                {% if active_role == 'customer' %}
-                                    <i data-lucide="check" class="ml-auto h-3.5 w-3.5"></i>
-                                {% endif %}
-                            </a>
-                        </div>
+                    <!-- Role Indicator: role tidak bisa diganti dari navbar -->
+                    <div class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700">
+                        {% if active_role == 'admin' %}
+                            <span class="flex h-5 w-5 items-center justify-center rounded-lg bg-violet-600 text-[9px] font-bold text-white">AD</span>
+                            <span>Admin</span>
+                        {% elif active_role == 'organizer' %}
+                            <span class="flex h-5 w-5 items-center justify-center rounded-lg bg-teal-600 text-[9px] font-bold text-white">OR</span>
+                            <span>Organizer</span>
+                        {% elif active_role == 'customer' %}
+                            <span class="flex h-5 w-5 items-center justify-center rounded-lg bg-blue-600 text-[9px] font-bold text-white">CU</span>
+                            <span>Customer</span>
+                        {% else %}
+                            <span class="flex h-5 w-5 items-center justify-center rounded-lg bg-slate-500 text-[9px] font-bold text-white">GU</span>
+                            <span>Guest</span>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -390,23 +361,6 @@
     </footer>
 
     <script>
-        function toggleRoleDropdown() {
-            const dropdown = document.getElementById('roleDropdown');
-
-            if (dropdown) {
-                dropdown.classList.toggle('hidden');
-            }
-        }
-
-        document.addEventListener('click', function (event) {
-            const wrapper = document.getElementById('roleDropdownWrapper');
-            const dropdown = document.getElementById('roleDropdown');
-
-            if (wrapper && dropdown && !wrapper.contains(event.target)) {
-                dropdown.classList.add('hidden');
-            }
-        });
-
         document.addEventListener('DOMContentLoaded', function () {
             if (window.lucide) {
                 lucide.createIcons();

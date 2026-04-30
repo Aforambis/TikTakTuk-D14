@@ -161,9 +161,9 @@ ARTISTS = [
 ]
 
 USER_CREDENTIALS = {
-    "admin": {"password": "admin123", "role": "admin"},
-    "organizer": {"password": "organizer123", "role": "organizer"},
-    "customer": {"password": "customer123", "role": "customer"},
+    "admin": {"password": "admin123", "role": "admin", "name": "Admin Utama"},
+    "organizer": {"password": "organizer123", "role": "organizer", "name": "Andi Wijaya"},
+    "customer": {"password": "customer123", "role": "customer", "name": "Budi Santoso"},
 }
 
 USERS = {
