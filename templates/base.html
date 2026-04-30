@@ -32,55 +32,70 @@
 <body class="min-h-screen bg-slate-50 text-slate-800 flex flex-col">
 
     <!-- Navbar -->
-    <nav class="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-slate-200 shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <nav class="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur shadow-sm">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 
             <!-- Top Navbar -->
-            <div class="h-16 flex items-center justify-between gap-4">
+            <div class="flex h-16 items-center justify-between gap-4">
 
                 <!-- Logo -->
-                <a href="{% url 'dashboard' %}" class="flex items-center gap-3 shrink-0">
-                    <div class="w-9 h-9 rounded-2xl bg-indigo-600 flex items-center justify-center shadow-sm">
-                        <span class="text-white text-xs font-black tracking-wider">TT</span>
+                <a href="{% if active_role == 'guest' %}{% url 'landing_page' %}{% else %}{% url 'dashboard' %}{% endif %}"
+                   class="flex shrink-0 items-center gap-3">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-600 shadow-sm">
+                        <span class="text-xs font-black tracking-wider text-white">TT</span>
                     </div>
 
                     <div class="leading-tight">
-                        <p class="font-extrabold text-slate-900 text-sm sm:text-base">TikTakTuk</p>
-                        <p class="text-[11px] text-slate-500 hidden sm:block">Platform Manajemen Tiket</p>
+                        <p class="text-sm font-extrabold text-slate-900 sm:text-base">TikTakTuk</p>
+                        <p class="hidden text-[11px] text-slate-500 sm:block">Ticketing Management Platform</p>
                     </div>
                 </a>
 
                 <!-- Right Area -->
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2">
 
-                    <!-- Role Badge + Dropdown -->
+                    <!-- Login / Logout -->
+                    {% if active_role == "guest" %}
+                        <a href="{% url 'login' %}"
+                           class="hidden items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 sm:inline-flex">
+                            <i data-lucide="log-in" class="h-4 w-4"></i>
+                            Login
+                        </a>
+                    {% else %}
+                        <a href="{% url 'logout' %}"
+                           class="hidden items-center gap-2 rounded-xl border border-red-100 bg-red-50 px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-100 sm:inline-flex">
+                            <i data-lucide="log-out" class="h-4 w-4"></i>
+                            Logout
+                        </a>
+                    {% endif %}
+
+                    <!-- Role Dropdown -->
                     <div class="relative" id="roleDropdownWrapper">
                         <button
                             type="button"
                             onclick="toggleRoleDropdown()"
-                            class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
+                            class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
                         >
                             {% if active_role == 'admin' %}
-                                <span class="w-5 h-5 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-[9px] font-bold">AD</span>
+                                <span class="flex h-5 w-5 items-center justify-center rounded-lg bg-indigo-600 text-[9px] font-bold text-white">AD</span>
                                 <span>Admin</span>
                             {% elif active_role == 'organizer' %}
-                                <span class="w-5 h-5 rounded-lg bg-teal-600 text-white flex items-center justify-center text-[9px] font-bold">OR</span>
+                                <span class="flex h-5 w-5 items-center justify-center rounded-lg bg-teal-600 text-[9px] font-bold text-white">OR</span>
                                 <span>Organizer</span>
                             {% elif active_role == 'customer' %}
-                                <span class="w-5 h-5 rounded-lg bg-blue-600 text-white flex items-center justify-center text-[9px] font-bold">CU</span>
+                                <span class="flex h-5 w-5 items-center justify-center rounded-lg bg-blue-600 text-[9px] font-bold text-white">CU</span>
                                 <span>Customer</span>
                             {% else %}
-                                <span class="w-5 h-5 rounded-lg bg-slate-500 text-white flex items-center justify-center text-[9px] font-bold">GU</span>
+                                <span class="flex h-5 w-5 items-center justify-center rounded-lg bg-slate-500 text-[9px] font-bold text-white">GU</span>
                                 <span>Guest</span>
                             {% endif %}
 
-                            <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400"></i>
+                            <i data-lucide="chevron-down" class="h-4 w-4 text-slate-400"></i>
                         </button>
 
-                        <!-- Dropdown -->
                         <div
                             id="roleDropdown"
-                            class="hidden absolute right-0 mt-2 w-48 rounded-2xl border border-slate-100 bg-white p-2 shadow-xl"
+                            class="hidden absolute right-0 mt-2 w-52 rounded-2xl border border-slate-100 bg-white p-2 shadow-xl"
                         >
                             <p class="px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-slate-400">
                                 Ganti Role Demo
@@ -89,40 +104,40 @@
                             <a href="{% url 'set_role' 'guest' %}"
                                class="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition
                                {% if active_role == 'guest' %}bg-slate-100 text-slate-900{% else %}text-slate-600 hover:bg-slate-50{% endif %}">
-                                <span class="w-5 h-5 rounded-lg bg-slate-500 text-white flex items-center justify-center text-[9px] font-bold">GU</span>
+                                <span class="flex h-5 w-5 items-center justify-center rounded-lg bg-slate-500 text-[9px] font-bold text-white">GU</span>
                                 Guest
                                 {% if active_role == 'guest' %}
-                                    <i data-lucide="check" class="w-3.5 h-3.5 ml-auto"></i>
+                                    <i data-lucide="check" class="ml-auto h-3.5 w-3.5"></i>
                                 {% endif %}
                             </a>
 
                             <a href="{% url 'set_role' 'admin' %}"
                                class="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition
                                {% if active_role == 'admin' %}bg-indigo-50 text-indigo-700{% else %}text-slate-600 hover:bg-slate-50{% endif %}">
-                                <span class="w-5 h-5 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-[9px] font-bold">AD</span>
+                                <span class="flex h-5 w-5 items-center justify-center rounded-lg bg-indigo-600 text-[9px] font-bold text-white">AD</span>
                                 Admin
                                 {% if active_role == 'admin' %}
-                                    <i data-lucide="check" class="w-3.5 h-3.5 ml-auto"></i>
+                                    <i data-lucide="check" class="ml-auto h-3.5 w-3.5"></i>
                                 {% endif %}
                             </a>
 
                             <a href="{% url 'set_role' 'organizer' %}"
                                class="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition
                                {% if active_role == 'organizer' %}bg-teal-50 text-teal-700{% else %}text-slate-600 hover:bg-slate-50{% endif %}">
-                                <span class="w-5 h-5 rounded-lg bg-teal-600 text-white flex items-center justify-center text-[9px] font-bold">OR</span>
+                                <span class="flex h-5 w-5 items-center justify-center rounded-lg bg-teal-600 text-[9px] font-bold text-white">OR</span>
                                 Organizer
                                 {% if active_role == 'organizer' %}
-                                    <i data-lucide="check" class="w-3.5 h-3.5 ml-auto"></i>
+                                    <i data-lucide="check" class="ml-auto h-3.5 w-3.5"></i>
                                 {% endif %}
                             </a>
 
                             <a href="{% url 'set_role' 'customer' %}"
                                class="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition
                                {% if active_role == 'customer' %}bg-blue-50 text-blue-700{% else %}text-slate-600 hover:bg-slate-50{% endif %}">
-                                <span class="w-5 h-5 rounded-lg bg-blue-600 text-white flex items-center justify-center text-[9px] font-bold">CU</span>
+                                <span class="flex h-5 w-5 items-center justify-center rounded-lg bg-blue-600 text-[9px] font-bold text-white">CU</span>
                                 Customer
                                 {% if active_role == 'customer' %}
-                                    <i data-lucide="check" class="w-3.5 h-3.5 ml-auto"></i>
+                                    <i data-lucide="check" class="ml-auto h-3.5 w-3.5"></i>
                                 {% endif %}
                             </a>
                         </div>
@@ -130,152 +145,206 @@
                 </div>
             </div>
 
-            <!-- Menu Navbar -->
+            <!-- Navigation Menu -->
             <div class="nav-scroll flex gap-2 overflow-x-auto pb-3 text-xs">
 
                 {% if active_role == 'guest' %}
+                    <a href="{% url 'landing_page' %}"
+                       class="whitespace-nowrap rounded-xl px-3 py-2 font-semibold transition
+                       {% if active_url == 'landing_page' %}bg-indigo-600 text-white{% else %}text-slate-600 hover:bg-slate-100 hover:text-slate-900{% endif %}">
+                        Home
+                    </a>
+
                     <a href="{% url 'event_list' %}"
-                       class="whitespace-nowrap px-3 py-2 rounded-xl font-semibold transition
+                       class="whitespace-nowrap rounded-xl px-3 py-2 font-semibold transition
                        {% if active_url == 'event_list' %}bg-indigo-600 text-white{% else %}text-slate-600 hover:bg-slate-100 hover:text-slate-900{% endif %}">
                         Cari Event
                     </a>
 
+                    <a href="{% url 'ticket_categories' %}"
+                       class="whitespace-nowrap rounded-xl px-3 py-2 font-semibold transition
+                       {% if active_url == 'ticket_categories' %}bg-indigo-600 text-white{% else %}text-slate-600 hover:bg-slate-100 hover:text-slate-900{% endif %}">
+                        Kategori Tiket
+                    </a>
+
                     <a href="{% url 'venue_list' %}"
-                       class="whitespace-nowrap px-3 py-2 rounded-xl font-semibold transition
+                       class="whitespace-nowrap rounded-xl px-3 py-2 font-semibold transition
                        {% if active_url == 'venue_list' %}bg-indigo-600 text-white{% else %}text-slate-600 hover:bg-slate-100 hover:text-slate-900{% endif %}">
                         Venue
                     </a>
 
                     <a href="{% url 'artist_list' %}"
-                       class="whitespace-nowrap px-3 py-2 rounded-xl font-semibold transition
+                       class="whitespace-nowrap rounded-xl px-3 py-2 font-semibold transition
                        {% if active_url == 'artist_list' %}bg-indigo-600 text-white{% else %}text-slate-600 hover:bg-slate-100 hover:text-slate-900{% endif %}">
                         Artis
                     </a>
 
-                    <a href="{% url 'set_role' 'customer' %}"
-                       class="whitespace-nowrap px-3 py-2 rounded-xl font-semibold bg-slate-900 text-white hover:bg-slate-800 transition">
-                        Login Demo
+                    <a href="{% url 'promotions' %}"
+                       class="whitespace-nowrap rounded-xl px-3 py-2 font-semibold transition
+                       {% if active_url == 'promotions' %}bg-indigo-600 text-white{% else %}text-slate-600 hover:bg-slate-100 hover:text-slate-900{% endif %}">
+                        Promo
+                    </a>
+
+                    <a href="{% url 'login' %}"
+                       class="whitespace-nowrap rounded-xl bg-slate-900 px-3 py-2 font-semibold text-white transition hover:bg-slate-800">
+                        Login
                     </a>
 
                 {% elif active_role == 'admin' %}
                     <a href="{% url 'dashboard' %}"
-                       class="whitespace-nowrap px-3 py-2 rounded-xl font-semibold transition
+                       class="whitespace-nowrap rounded-xl px-3 py-2 font-semibold transition
                        {% if active_url == 'dashboard' %}bg-indigo-600 text-white{% else %}text-slate-600 hover:bg-slate-100 hover:text-slate-900{% endif %}">
                         Dashboard
                     </a>
 
+                    <a href="{% url 'my_events' %}"
+                       class="whitespace-nowrap rounded-xl px-3 py-2 font-semibold transition
+                       {% if active_url == 'my_events' or active_url == 'event_create' or active_url == 'event_update' %}bg-indigo-600 text-white{% else %}text-slate-600 hover:bg-slate-100 hover:text-slate-900{% endif %}">
+                        Manajemen Event
+                    </a>
+
+                    <a href="{% url 'ticket_categories' %}"
+                       class="whitespace-nowrap rounded-xl px-3 py-2 font-semibold transition
+                       {% if active_url == 'ticket_categories' %}bg-indigo-600 text-white{% else %}text-slate-600 hover:bg-slate-100 hover:text-slate-900{% endif %}">
+                        Kategori Tiket
+                    </a>
+
                     <a href="{% url 'venue_list' %}"
-                       class="whitespace-nowrap px-3 py-2 rounded-xl font-semibold transition
+                       class="whitespace-nowrap rounded-xl px-3 py-2 font-semibold transition
                        {% if active_url == 'venue_list' or active_url == 'venue_create' or active_url == 'venue_update' or active_url == 'venue_delete' %}bg-indigo-600 text-white{% else %}text-slate-600 hover:bg-slate-100 hover:text-slate-900{% endif %}">
-                        Manajemen Venue
+                        Venue
                     </a>
 
                     <a href="{% url 'seats' %}"
-                       class="whitespace-nowrap px-3 py-2 rounded-xl font-semibold transition
+                       class="whitespace-nowrap rounded-xl px-3 py-2 font-semibold transition
                        {% if active_url == 'seats' %}bg-indigo-600 text-white{% else %}text-slate-600 hover:bg-slate-100 hover:text-slate-900{% endif %}">
-                        Manajemen Kursi
+                        Kursi
                     </a>
 
                     <a href="{% url 'tickets' %}"
-                       class="whitespace-nowrap px-3 py-2 rounded-xl font-semibold transition
+                       class="whitespace-nowrap rounded-xl px-3 py-2 font-semibold transition
                        {% if active_url == 'tickets' %}bg-indigo-600 text-white{% else %}text-slate-600 hover:bg-slate-100 hover:text-slate-900{% endif %}">
-                        Manajemen Tiket
+                        Tiket
                     </a>
 
                     <a href="{% url 'order_list' %}"
-                       class="whitespace-nowrap px-3 py-2 rounded-xl font-semibold transition
-                       {% if active_url == 'order_list' %}bg-indigo-600 text-white{% else %}text-slate-600 hover:bg-slate-100 hover:text-slate-900{% endif %}">
-                        Semua Order
+                       class="whitespace-nowrap rounded-xl px-3 py-2 font-semibold transition
+                       {% if active_url == 'order_list' or active_url == 'orders' %}bg-indigo-600 text-white{% else %}text-slate-600 hover:bg-slate-100 hover:text-slate-900{% endif %}">
+                        Order
                     </a>
 
-                    <a href="{% url 'my_events' %}"
-                      class="whitespace-nowrap px-3 py-2 rounded-xl font-semibold transition
-                      {% if active_url == 'my_events' or active_url == 'event_create' or active_url == 'event_update' %}bg-indigo-600 text-white{% else %}text-slate-600 hover:bg-slate-100 hover:text-slate-900{% endif %}">
-                      Manajemen Event
+                    <a href="{% url 'promotions' %}"
+                       class="whitespace-nowrap rounded-xl px-3 py-2 font-semibold transition
+                       {% if active_url == 'promotions' %}bg-indigo-600 text-white{% else %}text-slate-600 hover:bg-slate-100 hover:text-slate-900{% endif %}">
+                        Promosi
                     </a>
 
                     <a href="{% url 'artist_list' %}"
-                       class="whitespace-nowrap px-3 py-2 rounded-xl font-semibold transition
+                       class="whitespace-nowrap rounded-xl px-3 py-2 font-semibold transition
                        {% if active_url == 'artist_list' or active_url == 'artist_create' or active_url == 'artist_update' or active_url == 'artist_delete' %}bg-indigo-600 text-white{% else %}text-slate-600 hover:bg-slate-100 hover:text-slate-900{% endif %}">
                         Artis
                     </a>
 
                 {% elif active_role == 'organizer' %}
                     <a href="{% url 'dashboard' %}"
-                       class="whitespace-nowrap px-3 py-2 rounded-xl font-semibold transition
+                       class="whitespace-nowrap rounded-xl px-3 py-2 font-semibold transition
                        {% if active_url == 'dashboard' %}bg-indigo-600 text-white{% else %}text-slate-600 hover:bg-slate-100 hover:text-slate-900{% endif %}">
                         Dashboard
                     </a>
 
                     <a href="{% url 'my_events' %}"
-                       class="whitespace-nowrap px-3 py-2 rounded-xl font-semibold transition
+                       class="whitespace-nowrap rounded-xl px-3 py-2 font-semibold transition
                        {% if active_url == 'my_events' or active_url == 'event_create' or active_url == 'event_update' %}bg-indigo-600 text-white{% else %}text-slate-600 hover:bg-slate-100 hover:text-slate-900{% endif %}">
                         Event Saya
                     </a>
 
+                    <a href="{% url 'ticket_categories' %}"
+                       class="whitespace-nowrap rounded-xl px-3 py-2 font-semibold transition
+                       {% if active_url == 'ticket_categories' %}bg-indigo-600 text-white{% else %}text-slate-600 hover:bg-slate-100 hover:text-slate-900{% endif %}">
+                        Kategori Tiket
+                    </a>
+
                     <a href="{% url 'venue_list' %}"
-                       class="whitespace-nowrap px-3 py-2 rounded-xl font-semibold transition
-                       {% if active_url == 'venue_list' or active_url == 'venue_create' or active_url == 'venue_update' or active_url == 'venue_delete' %}bg-indigo-600 text-white{% else %}text-slate-600 hover:bg-slate-100 hover:text-slate-900{% endif %}">
-                        Manajemen Venue
+                       class="whitespace-nowrap rounded-xl px-3 py-2 font-semibold transition
+                       {% if active_url == 'venue_list' %}bg-indigo-600 text-white{% else %}text-slate-600 hover:bg-slate-100 hover:text-slate-900{% endif %}">
+                        Venue
                     </a>
 
                     <a href="{% url 'seats' %}"
-                       class="whitespace-nowrap px-3 py-2 rounded-xl font-semibold transition
+                       class="whitespace-nowrap rounded-xl px-3 py-2 font-semibold transition
                        {% if active_url == 'seats' %}bg-indigo-600 text-white{% else %}text-slate-600 hover:bg-slate-100 hover:text-slate-900{% endif %}">
-                        Manajemen Kursi
+                        Kursi
                     </a>
 
                     <a href="{% url 'tickets' %}"
-                       class="whitespace-nowrap px-3 py-2 rounded-xl font-semibold transition
+                       class="whitespace-nowrap rounded-xl px-3 py-2 font-semibold transition
                        {% if active_url == 'tickets' %}bg-indigo-600 text-white{% else %}text-slate-600 hover:bg-slate-100 hover:text-slate-900{% endif %}">
-                        Manajemen Tiket
+                        Tiket
                     </a>
 
                     <a href="{% url 'order_list' %}"
-                       class="whitespace-nowrap px-3 py-2 rounded-xl font-semibold transition
-                       {% if active_url == 'order_list' %}bg-indigo-600 text-white{% else %}text-slate-600 hover:bg-slate-100 hover:text-slate-900{% endif %}">
-                        Semua Order
+                       class="whitespace-nowrap rounded-xl px-3 py-2 font-semibold transition
+                       {% if active_url == 'order_list' or active_url == 'orders' %}bg-indigo-600 text-white{% else %}text-slate-600 hover:bg-slate-100 hover:text-slate-900{% endif %}">
+                        Order
+                    </a>
+
+                    <a href="{% url 'promotions' %}"
+                       class="whitespace-nowrap rounded-xl px-3 py-2 font-semibold transition
+                       {% if active_url == 'promotions' %}bg-indigo-600 text-white{% else %}text-slate-600 hover:bg-slate-100 hover:text-slate-900{% endif %}">
+                        Promo
                     </a>
 
                     <a href="{% url 'artist_list' %}"
-                       class="whitespace-nowrap px-3 py-2 rounded-xl font-semibold transition
+                       class="whitespace-nowrap rounded-xl px-3 py-2 font-semibold transition
                        {% if active_url == 'artist_list' %}bg-indigo-600 text-white{% else %}text-slate-600 hover:bg-slate-100 hover:text-slate-900{% endif %}">
                         Artis
                     </a>
 
                 {% elif active_role == 'customer' %}
                     <a href="{% url 'dashboard' %}"
-                       class="whitespace-nowrap px-3 py-2 rounded-xl font-semibold transition
+                       class="whitespace-nowrap rounded-xl px-3 py-2 font-semibold transition
                        {% if active_url == 'dashboard' %}bg-indigo-600 text-white{% else %}text-slate-600 hover:bg-slate-100 hover:text-slate-900{% endif %}">
                         Dashboard
                     </a>
 
+                    <a href="{% url 'event_list' %}"
+                       class="whitespace-nowrap rounded-xl px-3 py-2 font-semibold transition
+                       {% if active_url == 'event_list' or active_url == 'checkout' %}bg-indigo-600 text-white{% else %}text-slate-600 hover:bg-slate-100 hover:text-slate-900{% endif %}">
+                        Cari Event
+                    </a>
+
+                    <a href="{% url 'ticket_categories' %}"
+                       class="whitespace-nowrap rounded-xl px-3 py-2 font-semibold transition
+                       {% if active_url == 'ticket_categories' %}bg-indigo-600 text-white{% else %}text-slate-600 hover:bg-slate-100 hover:text-slate-900{% endif %}">
+                        Kategori Tiket
+                    </a>
+
                     <a href="{% url 'tickets' %}"
-                       class="whitespace-nowrap px-3 py-2 rounded-xl font-semibold transition
+                       class="whitespace-nowrap rounded-xl px-3 py-2 font-semibold transition
                        {% if active_url == 'tickets' %}bg-indigo-600 text-white{% else %}text-slate-600 hover:bg-slate-100 hover:text-slate-900{% endif %}">
                         Tiket Saya
                     </a>
 
                     <a href="{% url 'order_list' %}"
-                       class="whitespace-nowrap px-3 py-2 rounded-xl font-semibold transition
-                       {% if active_url == 'order_list' %}bg-indigo-600 text-white{% else %}text-slate-600 hover:bg-slate-100 hover:text-slate-900{% endif %}">
+                       class="whitespace-nowrap rounded-xl px-3 py-2 font-semibold transition
+                       {% if active_url == 'order_list' or active_url == 'orders' %}bg-indigo-600 text-white{% else %}text-slate-600 hover:bg-slate-100 hover:text-slate-900{% endif %}">
                         Pesanan
                     </a>
 
-                    <a href="{% url 'event_list' %}"
-                       class="whitespace-nowrap px-3 py-2 rounded-xl font-semibold transition
-                       {% if active_url == 'event_list' or active_url == 'checkout' %}bg-indigo-600 text-white{% else %}text-slate-600 hover:bg-slate-100 hover:text-slate-900{% endif %}">
-                        Cari Event
+                    <a href="{% url 'promotions' %}"
+                       class="whitespace-nowrap rounded-xl px-3 py-2 font-semibold transition
+                       {% if active_url == 'promotions' %}bg-indigo-600 text-white{% else %}text-slate-600 hover:bg-slate-100 hover:text-slate-900{% endif %}">
+                        Promo
                     </a>
 
                     <a href="{% url 'venue_list' %}"
-                       class="whitespace-nowrap px-3 py-2 rounded-xl font-semibold transition
+                       class="whitespace-nowrap rounded-xl px-3 py-2 font-semibold transition
                        {% if active_url == 'venue_list' %}bg-indigo-600 text-white{% else %}text-slate-600 hover:bg-slate-100 hover:text-slate-900{% endif %}">
                         Venue
                     </a>
 
                     <a href="{% url 'artist_list' %}"
-                       class="whitespace-nowrap px-3 py-2 rounded-xl font-semibold transition
+                       class="whitespace-nowrap rounded-xl px-3 py-2 font-semibold transition
                        {% if active_url == 'artist_list' %}bg-indigo-600 text-white{% else %}text-slate-600 hover:bg-slate-100 hover:text-slate-900{% endif %}">
                         Artis
                     </a>
@@ -286,17 +355,17 @@
 
     <!-- Django Messages -->
     {% if messages %}
-        <div class="max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-5">
+        <div class="mx-auto w-full max-w-6xl px-4 pt-5 sm:px-6 lg:px-8">
             {% for message in messages %}
                 <div class="mb-3 rounded-2xl border px-4 py-3 text-sm font-medium
                     {% if message.tags == 'success' %}
-                        bg-emerald-50 border-emerald-200 text-emerald-700
+                        border-emerald-200 bg-emerald-50 text-emerald-700
                     {% elif message.tags == 'error' %}
-                        bg-red-50 border-red-200 text-red-700
+                        border-red-200 bg-red-50 text-red-700
                     {% elif message.tags == 'warning' %}
-                        bg-amber-50 border-amber-200 text-amber-700
+                        border-amber-200 bg-amber-50 text-amber-700
                     {% else %}
-                        bg-blue-50 border-blue-200 text-blue-700
+                        border-blue-200 bg-blue-50 text-blue-700
                     {% endif %}
                 ">
                     {{ message }}
@@ -306,14 +375,14 @@
     {% endif %}
 
     <!-- Main Content -->
-    <main class="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <main class="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
         {% block content %}
         {% endblock %}
     </main>
 
     <!-- Footer -->
     <footer class="border-t border-slate-200 bg-white">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div class="mx-auto max-w-6xl px-4 py-4 sm:px-6 lg:px-8">
             <p class="text-center text-xs text-slate-400">
                 TikTakTuk &copy; 2026
             </p>
@@ -323,7 +392,10 @@
     <script>
         function toggleRoleDropdown() {
             const dropdown = document.getElementById('roleDropdown');
-            dropdown.classList.toggle('hidden');
+
+            if (dropdown) {
+                dropdown.classList.toggle('hidden');
+            }
         }
 
         document.addEventListener('click', function (event) {
