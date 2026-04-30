@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="flex items-center justify-center min-h-[85vh] py-10">
+    <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 w-full max-w-md">
+        <div class="text-center mb-6">
+            <h1 class="text-2xl font-bold text-gray-900">Daftar Akun</h1>
+            <p class="text-gray-500 text-sm mt-1">Lengkapi data diri Anda di bawah ini</p>
+        </div>
+        
+        {% if error %}
+        <div class="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl mb-5 text-sm font-semibold flex items-center gap-2">
+            <i data-lucide="alert-circle" class="w-4 h-4"></i>
+            {{ error }}
+        </div>
+        {% endif %}
+
+        <form method="POST" class="space-y-4">
+            {% csrf_token %}
+            <div>
+                <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase">Nama Lengkap</label>
+                <input type="text" name="full_name" placeholder="Masukkan nama lengkap" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+            </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase">Email</label>
+                    <input type="email" name="email" placeholder="email@contoh.com" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase">Nomor Telepon</label>
+                    <input type="text" name="phone_number" placeholder="0812..." class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase">Username</label>
+                <input type="text" name="username" placeholder="Buat username" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase">Password</label>
+                    <input type="password" name="password" placeholder="••••••••" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 mb-1.5 uppercase">Konfirmasi</label>
+                    <input type="password" name="confirm_password" placeholder="••••••••" class="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+            </div>
+
+            <div class="flex items-start gap-3 py-2">
+                <input type="checkbox" name="terms" id="terms" class="mt-1 w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                <label for="terms" class="text-xs text-gray-500 leading-relaxed">
+                    Saya setuju dengan <a href="#" class="text-indigo-600 hover:underline">Syarat & Ketentuan</a> yang berlaku di platform TikTakTuk.
+                </label>
+            </div>
+            
+            <button type="submit" class="w-full bg-gray-900 text-white font-bold py-3 rounded-xl hover:bg-gray-800 transition-colors shadow-sm">Daftar Sekarang</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

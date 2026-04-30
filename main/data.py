@@ -1,8 +1,8 @@
 from copy import deepcopy
 
 VENUES = [
-    {"venue_id": "ven_001", "venue_name": "Jakarta Convention Center", "city": "Jakarta", "has_reserved_seating": True},
-    {"venue_id": "ven_002", "venue_name": "Bandung Hall Center", "city": "Bandung", "has_reserved_seating": False},
+    {"venue_id": "ven_001", "venue_name": "Jakarta Convention Center", "city": "Jakarta", "has_reserved_seating": True, "capacity": 300},
+    {"venue_id": "ven_002", "venue_name": "Bandung Hall Center", "city": "Bandung", "has_reserved_seating": False, "capacity": 1000},
 ]
 
 EVENTS = [
@@ -153,7 +153,13 @@ PROMOTIONS = [
     },
 ]
 
-# Credentials for login: username -> password + role mapping
+ARTISTS = [
+    {"artist_id": "art_001", "name": "Fourtwnty", "genre": "Indie Folk"},
+    {"artist_id": "art_002", "name": "Hindia", "genre": "Indie Pop"},
+    {"artist_id": "art_003", "name": "Tulus", "genre": "Pop"},
+    {"artist_id": "art_004", "name": "Nadin Amizah", "genre": "Pop"},
+]
+
 USER_CREDENTIALS = {
     "admin": {"password": "admin123", "role": "admin"},
     "organizer": {"password": "organizer123", "role": "organizer"},
@@ -166,12 +172,12 @@ USERS = {
     "customer": {"role": "customer", "name": "Budi Santoso", "customer_id": "cust_001", "user_id": "cust_user_001"},
 }
 
-
 def get_data():
     return {
         "venues": deepcopy(VENUES),
         "events": deepcopy(EVENTS),
         "ticket_categories": deepcopy(TICKET_CATEGORIES),
+        "artists": deepcopy(ARTISTS),
         "orders": deepcopy(ORDERS),
         "seats": deepcopy(SEATS),
         "tickets": deepcopy(TICKETS),

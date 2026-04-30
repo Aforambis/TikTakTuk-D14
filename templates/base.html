@@ -39,7 +39,8 @@
             <div class="flex h-16 items-center justify-between gap-4">
 
                 <!-- Logo -->
-                <a href="{% url 'dashboard' %}" class="flex shrink-0 items-center gap-3">
+                <a href="{% if active_role == 'guest' %}{% url 'landing_page' %}{% else %}{% url 'dashboard' %}{% endif %}"
+                   class="flex shrink-0 items-center gap-3">
                     <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-600 shadow-sm">
                         <span class="text-xs font-black tracking-wider text-white">TT</span>
                     </div>
@@ -148,10 +149,22 @@
             <div class="nav-scroll flex gap-2 overflow-x-auto pb-3 text-xs">
 
                 {% if active_role == 'guest' %}
+                    <a href="{% url 'landing_page' %}"
+                       class="whitespace-nowrap rounded-xl px-3 py-2 font-semibold transition
+                       {% if active_url == 'landing_page' %}bg-indigo-600 text-white{% else %}text-slate-600 hover:bg-slate-100 hover:text-slate-900{% endif %}">
+                        Home
+                    </a>
+
                     <a href="{% url 'event_list' %}"
                        class="whitespace-nowrap rounded-xl px-3 py-2 font-semibold transition
                        {% if active_url == 'event_list' %}bg-indigo-600 text-white{% else %}text-slate-600 hover:bg-slate-100 hover:text-slate-900{% endif %}">
                         Cari Event
+                    </a>
+
+                    <a href="{% url 'ticket_categories' %}"
+                       class="whitespace-nowrap rounded-xl px-3 py-2 font-semibold transition
+                       {% if active_url == 'ticket_categories' %}bg-indigo-600 text-white{% else %}text-slate-600 hover:bg-slate-100 hover:text-slate-900{% endif %}">
+                        Kategori Tiket
                     </a>
 
                     <a href="{% url 'venue_list' %}"
@@ -188,6 +201,12 @@
                        class="whitespace-nowrap rounded-xl px-3 py-2 font-semibold transition
                        {% if active_url == 'my_events' or active_url == 'event_create' or active_url == 'event_update' %}bg-indigo-600 text-white{% else %}text-slate-600 hover:bg-slate-100 hover:text-slate-900{% endif %}">
                         Manajemen Event
+                    </a>
+
+                    <a href="{% url 'ticket_categories' %}"
+                       class="whitespace-nowrap rounded-xl px-3 py-2 font-semibold transition
+                       {% if active_url == 'ticket_categories' %}bg-indigo-600 text-white{% else %}text-slate-600 hover:bg-slate-100 hover:text-slate-900{% endif %}">
+                        Kategori Tiket
                     </a>
 
                     <a href="{% url 'venue_list' %}"
@@ -239,6 +258,12 @@
                         Event Saya
                     </a>
 
+                    <a href="{% url 'ticket_categories' %}"
+                       class="whitespace-nowrap rounded-xl px-3 py-2 font-semibold transition
+                       {% if active_url == 'ticket_categories' %}bg-indigo-600 text-white{% else %}text-slate-600 hover:bg-slate-100 hover:text-slate-900{% endif %}">
+                        Kategori Tiket
+                    </a>
+
                     <a href="{% url 'venue_list' %}"
                        class="whitespace-nowrap rounded-xl px-3 py-2 font-semibold transition
                        {% if active_url == 'venue_list' %}bg-indigo-600 text-white{% else %}text-slate-600 hover:bg-slate-100 hover:text-slate-900{% endif %}">
@@ -286,6 +311,12 @@
                        class="whitespace-nowrap rounded-xl px-3 py-2 font-semibold transition
                        {% if active_url == 'event_list' or active_url == 'checkout' %}bg-indigo-600 text-white{% else %}text-slate-600 hover:bg-slate-100 hover:text-slate-900{% endif %}">
                         Cari Event
+                    </a>
+
+                    <a href="{% url 'ticket_categories' %}"
+                       class="whitespace-nowrap rounded-xl px-3 py-2 font-semibold transition
+                       {% if active_url == 'ticket_categories' %}bg-indigo-600 text-white{% else %}text-slate-600 hover:bg-slate-100 hover:text-slate-900{% endif %}">
+                        Kategori Tiket
                     </a>
 
                     <a href="{% url 'tickets' %}"
@@ -361,6 +392,7 @@
     <script>
         function toggleRoleDropdown() {
             const dropdown = document.getElementById('roleDropdown');
+
             if (dropdown) {
                 dropdown.classList.toggle('hidden');
             }

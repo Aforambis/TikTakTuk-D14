@@ -3,12 +3,12 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    # Auth
+    # Public / auth
+    path("", views.landing_page, name="landing_page"),
     path("login/", views.login_view, name="login"),
     path("logout/", views.logout_view, name="logout"),
 
     # Dashboard
-    path("", views.dashboard, name="dashboard"),
     path("dashboard/", views.dashboard, name="dashboard"),
 
     # Demo role switcher
@@ -44,9 +44,14 @@ urlpatterns = [
     path("artists/<uuid:artist_id>/update/", views.artist_update, name="artist_update"),
     path("artists/<uuid:artist_id>/delete/", views.artist_delete, name="artist_delete"),
 
+    # Ticket Categories from Pengguna_Hijau
+    path("ticket-categories/", views.category_page, name="ticket_categories"),
+
     # Orders
     path("orders/", views.order_list, name="order_list"),
     path("orders/", views.order_list, name="orders"),
+    path("orders/<uuid:order_id>/update/", views.update_order, name="update_order"),
+    path("orders/<uuid:order_id>/delete/", views.delete_order, name="delete_order"),
     path("events/<uuid:event_id>/checkout/", views.checkout, name="checkout"),
 
     # Promotions

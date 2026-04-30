@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import secrets
+import uuid
 from collections import Counter
 from decimal import Decimal
 
@@ -10,6 +11,7 @@ from django.db.models import Count, Q, Sum
 from django.http import Http404, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
 
 from .data import get_data
 
@@ -94,6 +96,33 @@ def _get_current_user_for_dummy_pages(request):
         role = "admin"
 
     return users[role]
+
+
+def get_current_user(request):
+    role = _current_role(request)
+
+    if role == "guest":
+        return {"role": "guest"}
+
+    data = get_data()
+    return data["users"].get(role, {"role": "guest"})
+
+
+def landing_page(request):
+    user = get_current_user(request)
+
+    if user.get("role") != "guest":
+        return redirect("dashboard")
+
+    return render(
+        request,
+        "main/landing.html",
+        {
+            "role": "guest",
+            "current_role": "guest",
+            "current_page": "home",
+        },
+    )
 
 
 def _get_current_organizer(request):
@@ -197,6 +226,9 @@ def _filter_ticket_rows(rows, user):
 # =========================================================
 
 def dashboard(request):
+    if _current_role(request) == "guest":
+        return redirect("landing_page")
+
     data = get_data()
     user = _get_current_user_for_dummy_pages(request)
     ticket_rows = _filter_ticket_rows(_build_ticket_rows(data), user)
@@ -1371,3 +1403,159 @@ def delete_promotion(request, promo_id):
         messages.success(request, "Promo berhasil dihapus.")
 
     return redirect("promotions")
+
+
+# =========================================================
+# Ticket Categories from Pengguna_Hijau
+# =========================================================
+
+TICKET_CATEGORIES_MEMORY = None
+
+
+def get_ticket_categories_memory():
+    global TICKET_CATEGORIES_MEMORY
+
+    if TICKET_CATEGORIES_MEMORY is None:
+        TICKET_CATEGORIES_MEMORY = get_data()["ticket_categories"]
+
+    return TICKET_CATEGORIES_MEMORY
+
+
+@csrf_exempt
+def category_page(request):
+    data = get_data()
+    user = get_current_user(request)
+
+    categories_mem = get_ticket_categories_memory()
+    error_message = None
+    success_message = None
+
+    if request.method == "POST":
+        if user.get("role") != "admin":
+            error_message = "Akses ditolak. Hanya Admin yang dapat mengelola kategori tiket."
+        else:
+            action = request.POST.get("action")
+
+            if action == "hapus":
+                category_id = request.POST.get("category_id")
+                categories_mem[:] = [
+                    cat for cat in categories_mem
+                    if cat["category_id"] != category_id
+                ]
+                success_message = "Data kategori tiket berhasil dihapus."
+
+            elif action in ["tambah", "edit"]:
+                event_id = request.POST.get("event_id")
+                category_name = request.POST.get("category_name")
+                price_str = request.POST.get("price")
+                quota_str = request.POST.get("quota")
+                category_id = request.POST.get("category_id")
+
+                if not event_id or not category_name or not price_str or not quota_str:
+                    error_message = "Gagal. Seluruh field wajib diisi."
+                else:
+                    try:
+                        price = int(price_str)
+                        new_quota = int(quota_str)
+                    except ValueError:
+                        error_message = "Harga dan kuota harus berupa angka."
+                    else:
+                        if new_quota <= 0:
+                            error_message = "Gagal. Kuota tiket harus lebih dari 0."
+                        elif price < 0:
+                            error_message = "Gagal. Harga tiket tidak boleh negatif."
+                        else:
+                            event = next(
+                                (e for e in data["events"] if e["event_id"] == event_id),
+                                None,
+                            )
+                            venue = None
+
+                            if event:
+                                venue = next(
+                                    (v for v in data["venues"] if v["venue_id"] == event["venue_id"]),
+                                    None,
+                                )
+
+                            venue_capacity = venue.get("capacity", 0) if venue else 0
+
+                            current_event_quota = 0
+                            for cat in categories_mem:
+                                if cat["event_id"] == event_id:
+                                    if action == "edit" and cat["category_id"] == category_id:
+                                        continue
+                                    current_event_quota += cat["quota"]
+
+                            if current_event_quota + new_quota > venue_capacity:
+                                venue_name = venue["venue_name"] if venue else "venue terkait"
+                                error_message = (
+                                    f"Gagal menyimpan. Total kuota tiket "
+                                    f"({current_event_quota + new_quota}) melebihi kapasitas "
+                                    f"{venue_name} ({venue_capacity} kursi)."
+                                )
+
+                if not error_message:
+                    if action == "tambah":
+                        categories_mem.append(
+                            {
+                                "category_id": str(uuid.uuid4()),
+                                "category_name": category_name,
+                                "event_id": event_id,
+                                "price": price,
+                                "quota": new_quota,
+                            }
+                        )
+                        success_message = f"Kategori tiket '{category_name}' berhasil ditambahkan."
+
+                    elif action == "edit":
+                        for cat in categories_mem:
+                            if cat["category_id"] == category_id:
+                                cat["event_id"] = event_id
+                                cat["category_name"] = category_name
+                                cat["price"] = price
+                                cat["quota"] = new_quota
+                                break
+
+                        success_message = f"Kategori tiket '{category_name}' berhasil diperbarui."
+
+    event_map = {
+        e["event_id"]: e["event_title"]
+        for e in data["events"]
+    }
+
+    categories = []
+    total_quota = 0
+    max_price = 0
+
+    for cat in categories_mem:
+        item = cat.copy()
+        item["event_name"] = event_map.get(cat["event_id"], "-")
+        categories.append(item)
+
+        total_quota += item["quota"]
+        max_price = max(max_price, item["price"])
+
+    categories.sort(
+        key=lambda item: (
+            item["event_name"].lower(),
+            item["category_name"].lower(),
+        )
+    )
+
+    return render(
+        request,
+        "main/ticket_categories.html",
+        {
+            "user": user,
+            "role": user.get("role", "guest"),
+            "current_role": user.get("role", "guest"),
+            "current_page": "kategori",
+            "page_title": "Kategori Tiket",
+            "categories": categories,
+            "events": data["events"],
+            "total_quota": total_quota,
+            "max_price": max_price,
+            "error_message": error_message,
+            "success_message": success_message,
+        },
+    )
