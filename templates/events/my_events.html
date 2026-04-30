@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Event Saya - TikTakTuk{% endblock %}
+
+{% block content %}
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h1 class="h3 mb-0">Acara Saya</h1>
+    <a class="btn btn-dark" href="{% url 'event_create' %}">Buat Acara</a>
+  </div>
+
+  <div class="card">
+    <div class="table-responsive">
+      <table class="table mb-0">
+        <thead>
+          <tr>
+            <th>Judul</th>
+            <th>Tanggal/Waktu</th>
+            <th>Venue</th>
+            <th>Organizer</th>
+            <th class="text-end">Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in events %}
+            <tr>
+              <td>{{ e.event_title }}</td>
+              <td>{{ e.event_datetime }}</td>
+              <td>{{ e.venue.venue_name }}</td>
+              <td>{{ e.organizer.organizer_name }}</td>
+              <td class="text-end">
+                <a class="btn btn-outline-dark btn-sm" href="{% url 'event_update' e.event_id %}">Edit</a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="5" class="text-muted">Belum ada event.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}
+

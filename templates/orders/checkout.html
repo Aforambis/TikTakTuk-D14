@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Checkout Tiket - TikTakTuk{% endblock %}
+
+{% block content %}
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h1 class="h3 mb-0">Checkout Tiket</h1>
+    <a class="btn btn-outline-secondary" href="{% url 'event_list' %}">Kembali</a>
+  </div>
+
+  <div class="card mb-3">
+    <div class="card-body">
+      <div class="fw-semibold">{{ event.event_title }}</div>
+      <div class="text-muted small">{{ event.event_datetime }} · {{ event.venue.venue_name }}</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <form method="post" class="row g-3">
+        {% csrf_token %}
+
+        <div class="col-md-6">
+          <label class="form-label">Kategori Tiket</label>
+          <select class="form-select" name="category_id">
+            <option value="" disabled {% if not form.data.category_id %}selected{% endif %}>Pilih kategori</option>
+            {% for c in categories %}
+              {% with c_id=c.category_id|stringformat:"s" %}
+                <option value="{{ c_id }}" {% if form.data.category_id == c_id %}selected{% endif %}>
+                  {{ c.category_name }} — Rp {{ c.price }}
+                </option>
+              {% endwith %}
+            {% endfor %}
+          </select>
+          {% if form.errors.category_id %}<div class="text-danger small">{{ form.errors.category_id }}</div>{% endif %}
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label">Jumlah Tiket</label>
+          <input class="form-control" type="number" min="1" max="10" name="quantity" value="{{ form.data.quantity|default:'1' }}">
+          {% if form.errors.quantity %}<div class="text-danger small">{{ form.errors.quantity }}</div>{% endif %}
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label">Kode Promo (opsional)</label>
+          <input class="form-control" name="promo_code" value="{{ form.data.promo_code|default:'' }}">
+        </div>
+
+        <div class="col-12 d-flex gap-2">
+          <button class="btn btn-dark" type="submit">Buat Order (Pending)</button>
+          <a class="btn btn-outline-secondary" href="{% url 'event_list' %}">Batal</a>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}
+

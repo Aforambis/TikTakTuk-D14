@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}{% if mode == "create" %}Buat Acara{% else %}Edit Acara{% endif %} - TikTakTuk{% endblock %}
+
+{% block content %}
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h1 class="h3 mb-0">{% if mode == "create" %}Buat Acara Baru{% else %}Edit Acara{% endif %}</h1>
+    <a class="btn btn-outline-secondary" href="{% url 'my_events' %}">Kembali</a>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <form method="post" class="row g-3">
+        {% csrf_token %}
+
+        <div class="col-12">
+          <label class="form-label">Judul Acara</label>
+          <input class="form-control" name="event_title" value="{{ form.data.event_title|default:form.initial.event_title|default:'' }}">
+          {% if form.errors.event_title %}<div class="text-danger small">{{ form.errors.event_title }}</div>{% endif %}
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Tanggal &amp; Waktu</label>
+          <input class="form-control" name="event_datetime" placeholder="YYYY-MM-DD HH:MM"
+                 value="{{ form.data.event_datetime|default:form.initial.event_datetime|default:'' }}">
+          {% if form.errors.event_datetime %}<div class="text-danger small">{{ form.errors.event_datetime }}</div>{% endif %}
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Venue</label>
+          <select class="form-select" name="venue_id">
+            <option value="" disabled {% if not form.data.venue_id and not form.initial.venue_id %}selected{% endif %}>Pilih venue</option>
+            {% for v in venues %}
+              {% with v_id=v.venue_id|stringformat:"s" %}
+                <option value="{{ v_id }}"
+                  {% if form.data.venue_id == v_id or form.initial.venue_id|stringformat:"s" == v_id %}selected{% endif %}>
+                  {{ v.venue_name }} ({{ v.city }})
+                </option>
+              {% endwith %}
+            {% endfor %}
+          </select>
+          {% if form.errors.venue_id %}<div class="text-danger small">{{ form.errors.venue_id }}</div>{% endif %}
+        </div>
+
+        <div class="col-12">
+          <label class="form-label">Organizer</label>
+          {% if current_role == "organizer" and current_organizer %}
+            <input class="form-control" value="{{ current_organizer.organizer_name }}" disabled>
+            <input type="hidden" name="organizer_id" value="{{ current_organizer.organizer_id }}">
+          {% else %}
+            <select class="form-select" name="organizer_id">
+              <option value="" disabled {% if not form.data.organizer_id and not form.initial.organizer_id %}selected{% endif %}>Pilih organizer</option>
+              {% for o in organizers %}
+                {% with o_id=o.organizer_id|stringformat:"s" %}
+                  <option value="{{ o_id }}"
+                    {% if form.data.organizer_id == o_id or form.initial.organizer_id|stringformat:"s" == o_id %}selected{% endif %}>
+                    {{ o.organizer_name }}
+                  </option>
+                {% endwith %}
+              {% endfor %}
+            </select>
+          {% endif %}
+          {% if form.errors.organizer_id %}<div class="text-danger small">{{ form.errors.organizer_id }}</div>{% endif %}
+        </div>
+
+        <div class="col-12 d-flex gap-2">
+          <button class="btn btn-dark" type="submit">{% if mode == "create" %}Buat Acara{% else %}Simpan{% endif %}</button>
+          <a class="btn btn-outline-secondary" href="{% url 'my_events' %}">Batal</a>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}
+

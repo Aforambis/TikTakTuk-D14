@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Hapus Artis - TikTakTuk{% endblock %}
+
+{% block content %}
+  <h1 class="h3 mb-3">Hapus Artis</h1>
+  <div class="alert alert-warning">
+    Yakin ingin menghapus artis <strong>{{ artist.name }}</strong> ({{ artist.artist_id }})?
+  </div>
+
+  <form method="post" class="d-flex gap-2">
+    {% csrf_token %}
+    <button class="btn btn-danger" type="submit">Confirm Deletion</button>
+    <a class="btn btn-outline-secondary" href="{% url 'artist_list' %}">Cancel</a>
+  </form>
+{% endblock %}
+

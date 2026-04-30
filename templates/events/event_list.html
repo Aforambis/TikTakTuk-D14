@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Cari Event - TikTakTuk{% endblock %}
+
+{% block content %}
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h1 class="h3 mb-0">Jelajahi Acara</h1>
+  </div>
+
+  <form class="row g-2 mb-4" method="get">
+    <div class="col-md-4">
+      <input class="form-control" name="q" placeholder="Cari judul atau artis" value="{{ request.GET.q|default:'' }}">
+    </div>
+    <div class="col-md-3">
+      <select class="form-select" name="venue">
+        <option value="">Semua Venue</option>
+        {% for v in venues %}
+          <option value="{{ v.venue_id }}" {% if request.GET.venue == v.venue_id|stringformat:"s" %}selected{% endif %}>
+            {{ v.venue_name }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <select class="form-select" name="artist">
+        <option value="">Semua Artis</option>
+        {% for a in artists %}
+          <option value="{{ a.artist__artist_id }}" {% if request.GET.artist == a.artist__artist_id|stringformat:"s" %}selected{% endif %}>
+            {{ a.artist__name }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2 d-grid">
+      <button class="btn btn-dark" type="submit">Filter</button>
+    </div>
+  </form>
+
+  <div class="row g-3">
+    {% for e in events %}
+      <div class="col-md-6 col-lg-4">
+        <div class="card h-100">
+          <div class="card-body">
+            <h5 class="card-title mb-1">{{ e.event_title }}</h5>
+            <div class="text-muted small mb-2">
+              {{ e.event_datetime }} · {{ e.venue.venue_name }}
+            </div>
+            <div class="small mb-3">
+              <div><span class="text-muted">Organizer:</span> {{ e.organizer.organizer_name }}</div>
+            </div>
+            {% if current_role == "customer" %}
+              <a class="btn btn-outline-dark btn-sm" href="{% url 'checkout' e.event_id %}">Beli Tiket</a>
+            {% else %}
+              <span class="text-muted small">Login sebagai customer untuk beli tiket.</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div class="col-12">
+        <div class="alert alert-secondary mb-0">Belum ada event.</div>
+      </div>
+    {% endfor %}
+  </div>
+{% endblock %}
+

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}{% if mode == "create" %}Tambah Artis{% else %}Edit Artis{% endif %} - TikTakTuk{% endblock %}
+
+{% block content %}
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h1 class="h3 mb-0">{% if mode == "create" %}Tambah Artis Baru{% else %}Edit Artis{% endif %}</h1>
+    <a class="btn btn-outline-secondary" href="{% url 'artist_list' %}">Kembali</a>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <form method="post" class="row g-3">
+        {% csrf_token %}
+        <div class="col-md-6">
+          <label class="form-label">Name</label>
+          <input class="form-control" name="name" value="{{ form.data.name|default:form.initial.name|default:'' }}">
+          {% if form.errors.name %}<div class="text-danger small">{{ form.errors.name }}</div>{% endif %}
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Genre (opsional)</label>
+          <input class="form-control" name="genre" value="{{ form.data.genre|default:form.initial.genre|default:'' }}">
+        </div>
+        <div class="col-12 d-flex gap-2">
+          <button class="btn btn-dark" type="submit">{% if mode == "create" %}Create{% else %}Update{% endif %}</button>
+          <a class="btn btn-outline-secondary" href="{% url 'artist_list' %}">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}
+

@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Venue - TikTakTuk{% endblock %}
+
+{% block content %}
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h1 class="h3 mb-0">{% if can_manage %}Manajemen Venue{% else %}Daftar Venue{% endif %}</h1>
+    {% if can_manage %}
+      <a class="btn btn-dark" href="{% url 'venue_create' %}">Tambah Venue</a>
+    {% endif %}
+  </div>
+
+  <form class="row g-2 mb-3" method="get">
+    <div class="col-md-6">
+      <input class="form-control" name="q" placeholder="Cari nama atau alamat venue" value="{{ request.GET.q|default:'' }}">
+    </div>
+    <div class="col-md-4">
+      <select class="form-select" name="city">
+        <option value="">Semua Kota</option>
+        {% for c in cities %}
+          <option value="{{ c }}" {% if request.GET.city == c %}selected{% endif %}>{{ c }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2 d-grid">
+      <button class="btn btn-dark" type="submit">Filter</button>
+    </div>
+  </form>
+
+  <div class="card">
+    <div class="table-responsive">
+      <table class="table mb-0 align-middle">
+        <thead>
+          <tr>
+            <th>Venue ID</th>
+            <th>Nama</th>
+            <th>Kota</th>
+            <th>Kapasitas</th>
+            <th>Alamat</th>
+            {% if can_manage %}<th class="text-end">Aksi</th>{% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for v in venues %}
+            <tr>
+              <td class="text-muted">{{ v.venue_id }}</td>
+              <td class="fw-semibold">{{ v.venue_name }}</td>
+              <td>{{ v.city }}</td>
+              <td>{{ v.capacity }}</td>
+              <td class="text-truncate" style="max-width: 420px;">{{ v.address }}</td>
+              {% if can_manage %}
+                <td class="text-end">
+                  <a class="btn btn-outline-dark btn-sm" href="{% url 'venue_update' v.venue_id %}">Edit</a>
+                  <a class="btn btn-outline-danger btn-sm" href="{% url 'venue_delete' v.venue_id %}">Hapus</a>
+                </td>
+              {% endif %}
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="{% if can_manage %}6{% else %}5{% endif %}" class="text-muted">Belum ada venue.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}
+

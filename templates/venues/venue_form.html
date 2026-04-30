@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}{% if mode == "create" %}Tambah Venue{% else %}Edit Venue{% endif %} - TikTakTuk{% endblock %}
+
+{% block content %}
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h1 class="h3 mb-0">{% if mode == "create" %}Tambah Venue Baru{% else %}Edit Venue{% endif %}</h1>
+    <a class="btn btn-outline-secondary" href="{% url 'venue_list' %}">Kembali</a>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <form method="post" class="row g-3">
+        {% csrf_token %}
+
+        <div class="col-md-6">
+          <label class="form-label">Nama Venue</label>
+          <input class="form-control" name="venue_name" value="{{ form.venue_name.value|default:'' }}">
+          {% if form.errors.venue_name %}<div class="text-danger small">{{ form.errors.venue_name }}</div>{% endif %}
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label">Kota</label>
+          <input class="form-control" name="city" value="{{ form.city.value|default:'' }}">
+          {% if form.errors.city %}<div class="text-danger small">{{ form.errors.city }}</div>{% endif %}
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label">Kapasitas</label>
+          <input class="form-control" type="number" min="1" name="capacity" value="{{ form.capacity.value|default:'' }}">
+          {% if form.errors.capacity %}<div class="text-danger small">{{ form.errors.capacity }}</div>{% endif %}
+        </div>
+
+        <div class="col-12">
+          <label class="form-label">Alamat</label>
+          <textarea class="form-control" rows="3" name="address">{{ form.address.value|default:'' }}</textarea>
+          {% if form.errors.address %}<div class="text-danger small">{{ form.errors.address }}</div>{% endif %}
+        </div>
+
+        <div class="col-12 d-flex gap-2">
+          <button class="btn btn-dark" type="submit">{% if mode == "create" %}Tambah{% else %}Simpan{% endif %}</button>
+          <a class="btn btn-outline-secondary" href="{% url 'venue_list' %}">Batal</a>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}
+

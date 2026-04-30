@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Daftar Order - TikTakTuk{% endblock %}
+
+{% block content %}
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h1 class="h3 mb-0">Daftar Order</h1>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="card">
+        <div class="card-body">
+          <div class="text-muted small">Total Order</div>
+          <div class="fs-4 fw-semibold">{{ summary.total_orders }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card">
+        <div class="card-body">
+          <div class="text-muted small">Lunas</div>
+          <div class="fs-4 fw-semibold">{{ summary.paid_orders }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card">
+        <div class="card-body">
+          <div class="text-muted small">Pending</div>
+          <div class="fs-4 fw-semibold">{{ summary.pending_orders }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card">
+        <div class="card-body">
+          <div class="text-muted small">Total Revenue (Paid)</div>
+          <div class="fs-4 fw-semibold">Rp {{ summary.total_revenue }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <form class="row g-2 mb-3" method="get">
+    <div class="col-md-4">
+      <input class="form-control" name="q" placeholder="Cari Order ID" value="{{ request.GET.q|default:'' }}">
+    </div>
+    <div class="col-md-3">
+      <select class="form-select" name="status">
+        <option value="" {% if not request.GET.status %}selected{% endif %}>Semua Status</option>
+        <option value="Paid" {% if request.GET.status == "Paid" %}selected{% endif %}>Lunas</option>
+        <option value="Pending" {% if request.GET.status == "Pending" %}selected{% endif %}>Pending</option>
+        <option value="Cancelled" {% if request.GET.status == "Cancelled" %}selected{% endif %}>Dibatalkan</option>
+      </select>
+    </div>
+    <div class="col-md-2 d-grid">
+      <button class="btn btn-dark" type="submit">Filter</button>
+    </div>
+  </form>
+
+  <div class="card">
+    <div class="table-responsive">
+      <table class="table mb-0">
+        <thead>
+          <tr>
+            <th>Order ID</th>
+            <th>Order Date</th>
+            <th>Status</th>
+            <th>Total Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for o in orders %}
+            <tr>
+              <td class="text-muted">{{ o.order_id }}</td>
+              <td>{{ o.order_date }}</td>
+              <td>{{ o.payment_status }}</td>
+              <td>Rp {{ o.total_amount }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="4" class="text-muted">Belum ada order.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}
+

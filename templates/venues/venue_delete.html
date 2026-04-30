@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Hapus Venue - TikTakTuk{% endblock %}
+
+{% block content %}
+  <h1 class="h3 mb-3">Hapus Venue</h1>
+  <div class="alert alert-warning">
+    Yakin ingin menghapus venue <strong>{{ venue.venue_name }}</strong> ({{ venue.venue_id }})?
+  </div>
+
+  <form method="post" class="d-flex gap-2">
+    {% csrf_token %}
+    <button class="btn btn-danger" type="submit">Hapus</button>
+    <a class="btn btn-outline-secondary" href="{% url 'venue_list' %}">Batal</a>
+  </form>
+{% endblock %}
+
