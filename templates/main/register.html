@@ -53,7 +53,7 @@
                 <div>
                     <label class="mb-3 block text-xs font-bold uppercase tracking-wide text-slate-500">Role Akun</label>
                     <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
-                        <label class="cursor-pointer rounded-2xl border-2 p-4 text-center transition hover:border-blue-300 hover:bg-blue-50 {% if selected_role == 'customer' %}border-blue-500 bg-blue-50{% else %}border-slate-100 bg-white{% endif %}">
+                        <label data-role-card="customer" class="cursor-pointer rounded-2xl border-2 p-4 text-center transition hover:border-blue-300 hover:bg-blue-50 {% if selected_role == 'customer' %}border-blue-500 bg-blue-50{% else %}border-slate-100 bg-white{% endif %}">
                             <input type="radio" name="role" value="customer" class="sr-only" {% if selected_role == 'customer' %}checked{% endif %}>
                             <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-blue-600">
                                 <i data-lucide="user" class="h-6 w-6"></i>
@@ -62,7 +62,7 @@
                             <p class="mt-1 text-xs leading-5 text-slate-500">Membeli tiket dan membuat pesanan.</p>
                         </label>
 
-                        <label class="cursor-pointer rounded-2xl border-2 p-4 text-center transition hover:border-teal-300 hover:bg-teal-50 {% if selected_role == 'organizer' %}border-teal-500 bg-teal-50{% else %}border-slate-100 bg-white{% endif %}">
+                        <label data-role-card="organizer" class="cursor-pointer rounded-2xl border-2 p-4 text-center transition hover:border-teal-300 hover:bg-teal-50 {% if selected_role == 'organizer' %}border-teal-500 bg-teal-50{% else %}border-slate-100 bg-white{% endif %}">
                             <input type="radio" name="role" value="organizer" class="sr-only" {% if selected_role == 'organizer' %}checked{% endif %}>
                             <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-100 text-teal-600">
                                 <i data-lucide="building-2" class="h-6 w-6"></i>
@@ -71,7 +71,7 @@
                             <p class="mt-1 text-xs leading-5 text-slate-500">Membuat event dan mengelola tiket.</p>
                         </label>
 
-                        <label class="cursor-pointer rounded-2xl border-2 p-4 text-center transition hover:border-violet-300 hover:bg-violet-50 {% if selected_role == 'admin' %}border-violet-500 bg-violet-50{% else %}border-slate-100 bg-white{% endif %}">
+                        <label data-role-card="admin" class="cursor-pointer rounded-2xl border-2 p-4 text-center transition hover:border-violet-300 hover:bg-violet-50 {% if selected_role == 'admin' %}border-violet-500 bg-violet-50{% else %}border-slate-100 bg-white{% endif %}">
                             <input type="radio" name="role" value="admin" class="sr-only" {% if selected_role == 'admin' %}checked{% endif %}>
                             <div class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-100 text-violet-600">
                                 <i data-lucide="shield" class="h-6 w-6"></i>
@@ -136,6 +136,33 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             if (window.lucide) lucide.createIcons();
+
+            const cards = document.querySelectorAll('[data-role-card]');
+            const colorMap = {
+                customer: ['border-blue-500', 'bg-blue-50'],
+                organizer: ['border-teal-500', 'bg-teal-50'],
+                admin: ['border-violet-500', 'bg-violet-50'],
+            };
+            const inactiveClasses = ['border-slate-100', 'bg-white'];
+            const allActiveClasses = Object.values(colorMap).flat();
+
+            function setSelectedRole(role) {
+                cards.forEach((card) => {
+                    const input = card.querySelector('input[type="radio"]');
+                    const isActive = card.dataset.roleCard === role;
+
+                    card.classList.remove(...allActiveClasses, ...inactiveClasses);
+                    card.classList.add(...(isActive ? colorMap[role] : inactiveClasses));
+
+                    if (input) input.checked = isActive;
+                });
+            }
+
+            cards.forEach((card) => {
+                card.addEventListener('click', function () {
+                    setSelectedRole(card.dataset.roleCard);
+                });
+            });
         });
     </script>
 </body>

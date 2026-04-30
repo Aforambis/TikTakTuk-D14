@@ -246,19 +246,68 @@ def landing_page(request):
     )
 
 
+def _get_or_create_user_account(username: str, password: str = "session-dummy"):
+    from .models import UserAccount
+
+    username = (username or "user").strip() or "user"
+    user, _ = UserAccount.objects.get_or_create(
+        username=username,
+        defaults={"password": password},
+    )
+    return user
+
+
+def _get_session_identity(request, fallback_username: str, fallback_name: str):
+    username = (request.session.get("username") or fallback_username).strip()
+    display_name = (request.session.get("display_name") or fallback_name).strip()
+
+    return username, display_name
+
+
 def _get_current_organizer(request):
     from .models import Organizer
 
     organizer_id = request.session.get("organizer_id")
     if organizer_id:
-        return get_object_or_404(Organizer, organizer_id=organizer_id)
+        organizer = Organizer.objects.filter(organizer_id=organizer_id).first()
+        if organizer:
+            return organizer
+        request.session.pop("organizer_id", None)
 
+    # Kalau role aktif adalah organizer, profil organizer harus mengikuti akun login,
+    # bukan mengambil organizer pertama secara acak dari database.
+    if _current_role(request) == "organizer":
+        username, display_name = _get_session_identity(
+            request,
+            fallback_username="organizer",
+            fallback_name="Andi Wijaya",
+        )
+        user_account = _get_or_create_user_account(username, "organizer123")
+
+        organizer = Organizer.objects.filter(user=user_account).first()
+        if not organizer:
+            organizer = Organizer.objects.create(
+                organizer_name=display_name,
+                contact_email=f"{username}@tiktaktuk.local",
+                user=user_account,
+            )
+
+        request.session["organizer_id"] = str(organizer.organizer_id)
+        request.session.modified = True
+        return organizer
+
+    # Untuk admin, pakai organizer yang sudah ada. Jika database masih kosong,
+    # buat satu organizer default agar halaman event/order tidak jatuh ke 404.
     organizer = Organizer.objects.order_by("organizer_name").first()
-    if not organizer:
-        raise Http404("No organizer data available. Create one via /admin.")
+    if organizer:
+        return organizer
 
-    request.session["organizer_id"] = str(organizer.organizer_id)
-    return organizer
+    user_account = _get_or_create_user_account("organizer", "organizer123")
+    return Organizer.objects.create(
+        organizer_name="Andi Wijaya",
+        contact_email="organizer@tiktaktuk.local",
+        user=user_account,
+    )
 
 
 def _get_current_customer(request):
@@ -266,14 +315,41 @@ def _get_current_customer(request):
 
     customer_id = request.session.get("customer_id")
     if customer_id:
-        return get_object_or_404(Customer, customer_id=customer_id)
+        customer = Customer.objects.filter(customer_id=customer_id).first()
+        if customer:
+            return customer
+        request.session.pop("customer_id", None)
+
+    if _current_role(request) == "customer":
+        username, display_name = _get_session_identity(
+            request,
+            fallback_username="customer",
+            fallback_name="Budi Santoso",
+        )
+        user_account = _get_or_create_user_account(username, "customer123")
+
+        customer = Customer.objects.filter(user=user_account).first()
+        if not customer:
+            customer = Customer.objects.create(
+                full_name=display_name,
+                phone_number="-",
+                user=user_account,
+            )
+
+        request.session["customer_id"] = str(customer.customer_id)
+        request.session.modified = True
+        return customer
 
     customer = Customer.objects.order_by("full_name").first()
-    if not customer:
-        raise Http404("No customer data available. Create one via /admin.")
+    if customer:
+        return customer
 
-    request.session["customer_id"] = str(customer.customer_id)
-    return customer
+    user_account = _get_or_create_user_account("customer", "customer123")
+    return Customer.objects.create(
+        full_name="Budi Santoso",
+        phone_number="-",
+        user=user_account,
+    )
 
 
 # =========================================================
