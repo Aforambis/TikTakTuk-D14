@@ -55,6 +55,28 @@ ORDERS = [
         "event_title": "Festival Seni Budaya",
         "organizer_id": "org_002",
     },
+    {
+        "order_id": "ord_003",
+        "order_date": "2026-04-12 09:15",
+        "payment_status": "Lunas",
+        "total_amount": 500000,
+        "customer_id": "cust_001",
+        "customer_name": "Budi Santoso",
+        "event_id": "evt_001",
+        "event_title": "Konser Melodi Senja",
+        "organizer_id": "org_001",
+    },
+    {
+        "order_id": "ord_004",
+        "order_date": "2026-04-13 11:00",
+        "payment_status": "Dibatalkan",
+        "total_amount": 300000,
+        "customer_id": "cust_002",
+        "customer_name": "Siti Rahayu",
+        "event_id": "evt_002",
+        "event_title": "Festival Seni Budaya",
+        "organizer_id": "org_002",
+    },
 ]
 
 SEATS = [
@@ -98,6 +120,46 @@ HAS_RELATIONSHIP = [
     {"seat_id": "seat_001", "ticket_id": "tix_001"},
 ]
 
+PROMOTIONS = [
+    {
+        "promo_id": "promo_001",
+        "promo_code": "TIKTAK20",
+        "discount_type": "Persentase",
+        "discount_value": 20,
+        "start_date": "2024-01-01",
+        "end_date": "2024-12-31",
+        "usage_limit": 100,
+        "usage_count": 45,
+    },
+    {
+        "promo_id": "promo_002",
+        "promo_code": "HEMAT50K",
+        "discount_type": "Nominal",
+        "discount_value": 50000,
+        "start_date": "2024-01-01",
+        "end_date": "2024-12-31",
+        "usage_limit": 50,
+        "usage_count": 12,
+    },
+    {
+        "promo_id": "promo_003",
+        "promo_code": "NEWUSER30",
+        "discount_type": "Persentase",
+        "discount_value": 30,
+        "start_date": "2024-03-01",
+        "end_date": "2024-06-30",
+        "usage_limit": 200,
+        "usage_count": 87,
+    },
+]
+
+# Credentials for login: username -> password + role mapping
+USER_CREDENTIALS = {
+    "admin": {"password": "admin123", "role": "admin"},
+    "organizer": {"password": "organizer123", "role": "organizer"},
+    "customer": {"password": "customer123", "role": "customer"},
+}
+
 USERS = {
     "admin": {"role": "admin", "name": "Admin Utama", "user_id": "adm_001"},
     "organizer": {"role": "organizer", "name": "Andi Wijaya", "organizer_id": "org_001", "user_id": "org_user_001"},
@@ -115,4 +177,6 @@ def get_data():
         "tickets": deepcopy(TICKETS),
         "has_relationship": deepcopy(HAS_RELATIONSHIP),
         "users": deepcopy(USERS),
+        "promotions": deepcopy(PROMOTIONS),
+        "user_credentials": deepcopy(USER_CREDENTIALS),
     }
