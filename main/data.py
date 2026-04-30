@@ -1,4 +1,5 @@
 from copy import deepcopy
+import uuid
 
 VENUES = [
     {"venue_id": "ven_001", "venue_name": "Jakarta Convention Center", "city": "Jakarta", "has_reserved_seating": True, "capacity": 300},
@@ -27,9 +28,9 @@ EVENTS = [
 ]
 
 TICKET_CATEGORIES = [
-    {"category_id": "cat_001", "category_name": "VIP", "quota": 50, "price": 750000, "event_id": "evt_001"},
-    {"category_id": "cat_002", "category_name": "Regular", "quota": 200, "price": 250000, "event_id": "evt_001"},
-    {"category_id": "cat_003", "category_name": "General Admission", "quota": 500, "price": 150000, "event_id": "evt_002"},
+    {"category_id": str(uuid.uuid4()), "category_name": "VIP", "quota": 50, "price": 750000, "event_id": "evt_001"},
+    {"category_id": str(uuid.uuid4()), "category_name": "Regular", "quota": 200, "price": 250000, "event_id": "evt_001"},
+    {"category_id": str(uuid.uuid4()), "category_name": "General Admission", "quota": 500, "price": 150000, "event_id": "evt_002"},
 ]
 
 ORDERS = [
