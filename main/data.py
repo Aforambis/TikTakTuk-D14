@@ -1,8 +1,8 @@
 from copy import deepcopy
 
 VENUES = [
-    {"venue_id": "ven_001", "venue_name": "Jakarta Convention Center", "city": "Jakarta", "has_reserved_seating": True},
-    {"venue_id": "ven_002", "venue_name": "Bandung Hall Center", "city": "Bandung", "has_reserved_seating": False},
+    {"venue_id": "ven_001", "venue_name": "Jakarta Convention Center", "city": "Jakarta", "has_reserved_seating": True, "capacity": 300},
+    {"venue_id": "ven_002", "venue_name": "Bandung Hall Center", "city": "Bandung", "has_reserved_seating": False, "capacity": 1000},
 ]
 
 EVENTS = [
@@ -98,6 +98,13 @@ HAS_RELATIONSHIP = [
     {"seat_id": "seat_001", "ticket_id": "tix_001"},
 ]
 
+ARTISTS = [
+    {"artist_id": "art_001", "name": "Fourtwnty", "genre": "Indie Folk"},
+    {"artist_id": "art_002", "name": "Hindia", "genre": "Indie Pop"},
+    {"artist_id": "art_003", "name": "Tulus", "genre": "Pop"},
+    {"artist_id": "art_004", "name": "Nadin Amizah", "genre": "Pop"},
+]
+
 USERS = {
     "admin": {"role": "admin", "name": "Admin Utama", "user_id": "adm_001"},
     "organizer": {"role": "organizer", "name": "Andi Wijaya", "organizer_id": "org_001", "user_id": "org_user_001"},
@@ -110,6 +117,7 @@ def get_data():
         "venues": deepcopy(VENUES),
         "events": deepcopy(EVENTS),
         "ticket_categories": deepcopy(TICKET_CATEGORIES),
+        "artists": deepcopy(ARTISTS),
         "orders": deepcopy(ORDERS),
         "seats": deepcopy(SEATS),
         "tickets": deepcopy(TICKETS),
