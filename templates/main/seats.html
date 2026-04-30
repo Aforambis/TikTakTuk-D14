@@ -36,14 +36,13 @@
 
   <!-- Search & Filter -->
   <form method="get" class="flex gap-3">
-    <input type="hidden" name="role" value="{{ role }}">
     <div class="flex-1 relative">
       <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-3.5 h-3.5"></i>
       <input type="text" name="q" value="{{ q }}" placeholder="Cari section, baris, atau nomor..."
         class="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-300 bg-gray-50 focus:bg-white transition-all">
     </div>
     <select name="status" onchange="this.form.submit()" class="border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-teal-300 bg-gray-50">
-      <option value="">Semua Venue</option>
+      <option value="">Semua Status</option>
       <option value="Tersedia" {% if status == 'Tersedia' %}selected{% endif %}>Tersedia</option>
       <option value="Terisi" {% if status == 'Terisi' %}selected{% endif %}>Terisi</option>
     </select>
@@ -90,11 +89,11 @@
           {% if role == 'admin' or role == 'organizer' %}
           <td class="px-4 py-3">
             <div class="flex gap-1 justify-end">
-              <button onclick="openEditSeatModal('{{ row.seat_id }}', '{{ row.venue_name }}', '{{ row.section }}', '{{ row.row_number }}', '{{ row.seat_number }}')"
+              <button onclick="openEditSeatModal('{{ row.seat_id }}', '{{ row.venue_name|escapejs }}', '{{ row.section|escapejs }}', '{{ row.row_number|escapejs }}', '{{ row.seat_number|escapejs }}')"
                 class="p-1.5 rounded-lg hover:bg-teal-50 text-teal-500 transition-colors">
                 <i data-lucide="edit" class="w-3.5 h-3.5"></i>
               </button>
-              <button onclick="openDeleteSeatModal('{{ row.seat_id }}', '{{ row.section }}', '{{ row.row_number }}', '{{ row.seat_number }}')"
+              <button onclick="openDeleteSeatModal('{{ row.seat_id }}', '{{ row.section|escapejs }}', '{{ row.row_number|escapejs }}', '{{ row.seat_number|escapejs }}')"
                 {% if row.status == 'Terisi' %}disabled title="Hapus tiket terlebih dahulu"{% endif %}
                 class="p-1.5 rounded-lg transition-colors {% if row.status == 'Terisi' %}text-gray-300 cursor-not-allowed{% else %}hover:bg-red-50 text-red-400{% endif %}">
                 <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
@@ -105,7 +104,7 @@
         </tr>
         {% empty %}
         <tr>
-          <td colspan="6" class="py-12 text-center text-gray-400">
+          <td colspan="{% if role == 'admin' or role == 'organizer' %}6{% else %}5{% endif %}" class="py-12 text-center text-gray-400">
             <i data-lucide="armchair" class="w-9 h-9 mx-auto mb-2 opacity-30"></i>
             <p class="text-sm">Tidak ada kursi ditemukan</p>
           </td>
@@ -128,7 +127,7 @@
       </button>
     </div>
     <div class="p-6">
-      <form method="post" action="/kursi/create">
+      <form method="post" action="{% url 'create_seat' %}">
         {% csrf_token %}
         <input type="hidden" name="role" value="{{ role }}">
         <div class="mb-4">
@@ -257,12 +256,12 @@
     document.getElementById('editSeatSection').value = section;
     document.getElementById('editSeatRow').value = row;
     document.getElementById('editSeatNum').value = num;
-    document.getElementById('editSeatForm').action = '/kursi/update/' + seatId;
+    document.getElementById('editSeatForm').action = `/seats/${seatId}/update/`;
     openModal('editSeatModal');
   }
   function openDeleteSeatModal(seatId, section, row, num) {
     document.getElementById('deleteSeatLabel').textContent = section + ' — Baris ' + row + ', No. ' + num;
-    document.getElementById('deleteSeatForm').action = '/kursi/delete/' + seatId;
+    document.getElementById('deleteSeatForm').action = `/seats/${seatId}/delete/`;
     openModal('deleteSeatModal');
   }
   ['createSeatModal','editSeatModal','deleteSeatModal'].forEach(id => {

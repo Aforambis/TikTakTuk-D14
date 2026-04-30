@@ -3,87 +3,187 @@
 {% block title %}Daftar Order - TikTakTuk{% endblock %}
 
 {% block content %}
-  <div class="d-flex align-items-center justify-content-between mb-3">
-    <h1 class="h3 mb-0">Daftar Order</h1>
+<div class="space-y-6">
+
+  <!-- Header -->
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-900">
+        {% if current_role == "admin" %}
+          Semua Order
+        {% elif current_role == "organizer" %}
+          Order Event Saya
+        {% else %}
+          Pesanan Saya
+        {% endif %}
+      </h1>
+
+      <p class="mt-1 text-sm text-slate-500">
+        {% if current_role == "admin" %}
+          Pantau seluruh transaksi yang masuk ke platform TikTakTuk.
+        {% elif current_role == "organizer" %}
+          Pantau transaksi dari event yang dikelola oleh organizer aktif.
+        {% else %}
+          Lihat riwayat pesanan dan status pembayaran tiket Anda.
+        {% endif %}
+      </p>
+    </div>
+
+    {% if current_role == "customer" %}
+      <a href="{% url 'event_list' %}"
+         class="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700">
+        <i data-lucide="calendar-search" class="h-4 w-4"></i>
+        Cari Event
+      </a>
+    {% endif %}
   </div>
 
-  <div class="row g-3 mb-4">
-    <div class="col-md-3">
-      <div class="card">
-        <div class="card-body">
-          <div class="text-muted small">Total Order</div>
-          <div class="fs-4 fw-semibold">{{ summary.total_orders }}</div>
-        </div>
-      </div>
+  <!-- Stats -->
+  <div class="grid gap-4 md:grid-cols-4">
+    <div class="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+      <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Total Order</p>
+      <p class="mt-2 text-2xl font-bold text-slate-900">{{ summary.total_orders }}</p>
     </div>
-    <div class="col-md-3">
-      <div class="card">
-        <div class="card-body">
-          <div class="text-muted small">Lunas</div>
-          <div class="fs-4 fw-semibold">{{ summary.paid_orders }}</div>
-        </div>
-      </div>
+
+    <div class="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+      <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Paid</p>
+      <p class="mt-2 text-2xl font-bold text-emerald-600">{{ summary.paid_orders }}</p>
     </div>
-    <div class="col-md-3">
-      <div class="card">
-        <div class="card-body">
-          <div class="text-muted small">Pending</div>
-          <div class="fs-4 fw-semibold">{{ summary.pending_orders }}</div>
-        </div>
-      </div>
+
+    <div class="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+      <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Pending</p>
+      <p class="mt-2 text-2xl font-bold text-amber-600">{{ summary.pending_orders }}</p>
     </div>
-    <div class="col-md-3">
-      <div class="card">
-        <div class="card-body">
-          <div class="text-muted small">Total Revenue (Paid)</div>
-          <div class="fs-4 fw-semibold">Rp {{ summary.total_revenue }}</div>
-        </div>
-      </div>
+
+    <div class="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+      <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Revenue Paid</p>
+      <p class="mt-2 text-2xl font-bold text-slate-900">Rp {{ summary.total_revenue|floatformat:0 }}</p>
     </div>
   </div>
 
-  <form class="row g-2 mb-3" method="get">
-    <div class="col-md-4">
-      <input class="form-control" name="q" placeholder="Cari Order ID" value="{{ request.GET.q|default:'' }}">
-    </div>
-    <div class="col-md-3">
-      <select class="form-select" name="status">
-        <option value="" {% if not request.GET.status %}selected{% endif %}>Semua Status</option>
-        <option value="Paid" {% if request.GET.status == "Paid" %}selected{% endif %}>Lunas</option>
-        <option value="Pending" {% if request.GET.status == "Pending" %}selected{% endif %}>Pending</option>
-        <option value="Cancelled" {% if request.GET.status == "Cancelled" %}selected{% endif %}>Dibatalkan</option>
-      </select>
-    </div>
-    <div class="col-md-2 d-grid">
-      <button class="btn btn-dark" type="submit">Filter</button>
+  <!-- Filter -->
+  <form method="get" class="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+    <div class="grid gap-3 md:grid-cols-12">
+      <div class="md:col-span-6">
+        <label class="mb-1 block text-xs font-semibold text-slate-500">Cari Order ID</label>
+        <div class="relative">
+          <i data-lucide="search" class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"></i>
+          <input
+            type="text"
+            name="q"
+            value="{{ request.GET.q|default:'' }}"
+            placeholder="Masukkan Order ID"
+            class="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-3 text-sm text-slate-700 outline-none transition focus:border-indigo-300 focus:bg-white focus:ring-2 focus:ring-indigo-100"
+          >
+        </div>
+      </div>
+
+      <div class="md:col-span-4">
+        <label class="mb-1 block text-xs font-semibold text-slate-500">Status Pembayaran</label>
+        <select
+          name="status"
+          class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-indigo-300 focus:bg-white focus:ring-2 focus:ring-indigo-100"
+        >
+          <option value="" {% if not request.GET.status %}selected{% endif %}>Semua Status</option>
+          <option value="Paid" {% if request.GET.status == "Paid" %}selected{% endif %}>Paid</option>
+          <option value="Pending" {% if request.GET.status == "Pending" %}selected{% endif %}>Pending</option>
+          <option value="Cancelled" {% if request.GET.status == "Cancelled" %}selected{% endif %}>Cancelled</option>
+        </select>
+      </div>
+
+      <div class="flex items-end md:col-span-2">
+        <button
+          type="submit"
+          class="w-full rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+        >
+          Filter
+        </button>
+      </div>
     </div>
   </form>
 
-  <div class="card">
-    <div class="table-responsive">
-      <table class="table mb-0">
-        <thead>
+  <!-- Table -->
+  <div class="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
+    <div class="border-b border-slate-100 px-5 py-4">
+      <h2 class="text-sm font-bold text-slate-800">Tabel Order</h2>
+      <p class="mt-1 text-xs text-slate-400">
+        Data order diurutkan berdasarkan tanggal transaksi terbaru.
+      </p>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-slate-100">
+        <thead class="bg-slate-50">
           <tr>
-            <th>Order ID</th>
-            <th>Order Date</th>
-            <th>Status</th>
-            <th>Total Amount</th>
+            <th class="px-5 py-3 text-left text-xs font-bold uppercase tracking-wide text-slate-500">Order</th>
+            <th class="px-5 py-3 text-left text-xs font-bold uppercase tracking-wide text-slate-500">Customer</th>
+            <th class="px-5 py-3 text-left text-xs font-bold uppercase tracking-wide text-slate-500">Tanggal</th>
+            <th class="px-5 py-3 text-left text-xs font-bold uppercase tracking-wide text-slate-500">Status</th>
+            <th class="px-5 py-3 text-right text-xs font-bold uppercase tracking-wide text-slate-500">Total</th>
           </tr>
         </thead>
-        <tbody>
+
+        <tbody class="divide-y divide-slate-100 bg-white">
           {% for o in orders %}
-            <tr>
-              <td class="text-muted">{{ o.order_id }}</td>
-              <td>{{ o.order_date }}</td>
-              <td>{{ o.payment_status }}</td>
-              <td>Rp {{ o.total_amount }}</td>
+            <tr class="transition hover:bg-slate-50">
+              <td class="px-5 py-4">
+                <div class="flex items-center gap-3">
+                  <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+                    <i data-lucide="receipt" class="h-5 w-5"></i>
+                  </div>
+
+                  <div>
+                    <p class="font-semibold text-slate-900">Order</p>
+                    <p class="mt-0.5 max-w-[260px] truncate text-xs text-slate-400">{{ o.order_id }}</p>
+                  </div>
+                </div>
+              </td>
+
+              <td class="px-5 py-4">
+                <p class="text-sm font-medium text-slate-700">{{ o.customer.name|default:"Customer" }}</p>
+                <p class="text-xs text-slate-400">Pembeli tiket</p>
+              </td>
+
+              <td class="px-5 py-4">
+                <p class="text-sm font-medium text-slate-700">{{ o.order_date|date:"d M Y" }}</p>
+                <p class="text-xs text-slate-400">{{ o.order_date|date:"H:i" }} WIB</p>
+              </td>
+
+              <td class="px-5 py-4">
+                {% if o.payment_status == "Paid" %}
+                  <span class="inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                    Paid
+                  </span>
+                {% elif o.payment_status == "Pending" %}
+                  <span class="inline-flex rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+                    Pending
+                  </span>
+                {% else %}
+                  <span class="inline-flex rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-700">
+                    {{ o.payment_status }}
+                  </span>
+                {% endif %}
+              </td>
+
+              <td class="px-5 py-4 text-right">
+                <p class="text-sm font-bold text-slate-900">Rp {{ o.total_amount|floatformat:0 }}</p>
+              </td>
             </tr>
           {% empty %}
-            <tr><td colspan="4" class="text-muted">Belum ada order.</td></tr>
+            <tr>
+              <td colspan="5" class="px-5 py-12 text-center">
+                <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+                  <i data-lucide="inbox" class="h-6 w-6"></i>
+                </div>
+                <p class="mt-3 font-semibold text-slate-700">Belum ada order</p>
+                <p class="mt-1 text-sm text-slate-400">Data order akan muncul setelah customer melakukan checkout.</p>
+              </td>
+            </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
   </div>
-{% endblock %}
 
+</div>
+{% endblock %}

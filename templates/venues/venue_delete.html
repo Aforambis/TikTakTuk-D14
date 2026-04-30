@@ -3,15 +3,58 @@
 {% block title %}Hapus Venue - TikTakTuk{% endblock %}
 
 {% block content %}
-  <h1 class="h3 mb-3">Hapus Venue</h1>
-  <div class="alert alert-warning">
-    Yakin ingin menghapus venue <strong>{{ venue.venue_name }}</strong> ({{ venue.venue_id }})?
+<div class="mx-auto max-w-xl">
+
+  <div class="rounded-2xl border border-red-100 bg-white p-6 shadow-sm">
+    <div class="flex gap-4">
+      <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-red-50 text-red-600">
+        <i data-lucide="trash-2" class="h-6 w-6"></i>
+      </div>
+
+      <div class="flex-1">
+        <h1 class="text-xl font-bold text-slate-900">Hapus Venue</h1>
+        <p class="mt-2 text-sm leading-6 text-slate-600">
+          Apakah Anda yakin ingin menghapus venue
+          <span class="font-semibold text-slate-900">{{ venue.venue_name }}</span>?
+          Tindakan ini tidak dapat dibatalkan.
+        </p>
+
+        <div class="mt-4 rounded-xl bg-slate-50 p-4">
+          <dl class="space-y-2 text-sm">
+            <div class="flex justify-between gap-4">
+              <dt class="text-slate-500">Venue ID</dt>
+              <dd class="max-w-[260px] truncate font-medium text-slate-700">{{ venue.venue_id }}</dd>
+            </div>
+            <div class="flex justify-between gap-4">
+              <dt class="text-slate-500">Kota</dt>
+              <dd class="font-medium text-slate-700">{{ venue.city }}</dd>
+            </div>
+            <div class="flex justify-between gap-4">
+              <dt class="text-slate-500">Kapasitas</dt>
+              <dd class="font-medium text-slate-700">{{ venue.capacity }} kursi</dd>
+            </div>
+          </dl>
+        </div>
+
+        <form method="post" class="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          {% csrf_token %}
+
+          <a href="{% url 'venue_list' %}"
+             class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50">
+            Batal
+          </a>
+
+          <button
+            type="submit"
+            class="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700"
+          >
+            <i data-lucide="trash" class="h-4 w-4"></i>
+            Hapus
+          </button>
+        </form>
+      </div>
+    </div>
   </div>
 
-  <form method="post" class="d-flex gap-2">
-    {% csrf_token %}
-    <button class="btn btn-danger" type="submit">Hapus</button>
-    <a class="btn btn-outline-secondary" href="{% url 'venue_list' %}">Batal</a>
-  </form>
+</div>
 {% endblock %}
-

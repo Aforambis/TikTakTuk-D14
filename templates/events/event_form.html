@@ -1,74 +1,153 @@
 {% extends "base.html" %}
 
-{% block title %}{% if mode == "create" %}Buat Acara{% else %}Edit Acara{% endif %} - TikTakTuk{% endblock %}
+{% block title %}{% if mode == "create" %}Buat Event{% else %}Edit Event{% endif %} - TikTakTuk{% endblock %}
 
 {% block content %}
-  <div class="d-flex align-items-center justify-content-between mb-3">
-    <h1 class="h3 mb-0">{% if mode == "create" %}Buat Acara Baru{% else %}Edit Acara{% endif %}</h1>
-    <a class="btn btn-outline-secondary" href="{% url 'my_events' %}">Kembali</a>
+<div class="mx-auto max-w-3xl space-y-6">
+
+  <!-- Header -->
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-900">
+        {% if mode == "create" %}Buat Event Baru{% else %}Edit Event{% endif %}
+      </h1>
+      <p class="mt-1 text-sm text-slate-500">
+        {% if mode == "create" %}
+          Isi informasi dasar event, venue, dan organizer penyelenggara.
+        {% else %}
+          Perbarui informasi event yang sudah terdaftar.
+        {% endif %}
+      </p>
+    </div>
+
+    <a href="{% url 'my_events' %}"
+       class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50">
+      <i data-lucide="arrow-left" class="h-4 w-4"></i>
+      Kembali
+    </a>
   </div>
 
-  <div class="card">
-    <div class="card-body">
-      <form method="post" class="row g-3">
-        {% csrf_token %}
+  <!-- Form Card -->
+  <div class="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+    <form method="post" class="space-y-5">
+      {% csrf_token %}
 
-        <div class="col-12">
-          <label class="form-label">Judul Acara</label>
-          <input class="form-control" name="event_title" value="{{ form.data.event_title|default:form.initial.event_title|default:'' }}">
-          {% if form.errors.event_title %}<div class="text-danger small">{{ form.errors.event_title }}</div>{% endif %}
-        </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-semibold text-slate-700">
+          Judul Event <span class="text-red-500">*</span>
+        </label>
+        <input
+          type="text"
+          name="event_title"
+          value="{{ form.data.event_title|default:form.initial.event_title|default:'' }}"
+          placeholder="Contoh: TikTakTuk Music Festival 2026"
+          class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-indigo-300 focus:bg-white focus:ring-2 focus:ring-indigo-100"
+        >
+        {% if form.errors.event_title %}
+          <p class="mt-1 text-xs font-medium text-red-600">{{ form.errors.event_title|striptags }}</p>
+        {% endif %}
+      </div>
 
-        <div class="col-md-6">
-          <label class="form-label">Tanggal &amp; Waktu</label>
-          <input class="form-control" name="event_datetime" placeholder="YYYY-MM-DD HH:MM"
-                 value="{{ form.data.event_datetime|default:form.initial.event_datetime|default:'' }}">
-          {% if form.errors.event_datetime %}<div class="text-danger small">{{ form.errors.event_datetime }}</div>{% endif %}
-        </div>
+      <div>
+        <label class="mb-1.5 block text-sm font-semibold text-slate-700">
+          Tanggal & Waktu <span class="text-red-500">*</span>
+        </label>
+        <input
+          type="text"
+          name="event_datetime"
+          value="{{ form.data.event_datetime|default:form.initial.event_datetime|date:'Y-m-d H:i'|default:'' }}"
+          placeholder="YYYY-MM-DD HH:MM"
+          class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-indigo-300 focus:bg-white focus:ring-2 focus:ring-indigo-100"
+        >
+        <p class="mt-1 text-xs text-slate-400">
+          Format wajib: 2026-05-30 19:00
+        </p>
+        {% if form.errors.event_datetime %}
+          <p class="mt-1 text-xs font-medium text-red-600">{{ form.errors.event_datetime|striptags }}</p>
+        {% endif %}
+      </div>
 
-        <div class="col-md-6">
-          <label class="form-label">Venue</label>
-          <select class="form-select" name="venue_id">
-            <option value="" disabled {% if not form.data.venue_id and not form.initial.venue_id %}selected{% endif %}>Pilih venue</option>
-            {% for v in venues %}
-              {% with v_id=v.venue_id|stringformat:"s" %}
-                <option value="{{ v_id }}"
-                  {% if form.data.venue_id == v_id or form.initial.venue_id|stringformat:"s" == v_id %}selected{% endif %}>
-                  {{ v.venue_name }} ({{ v.city }})
+      <div>
+        <label class="mb-1.5 block text-sm font-semibold text-slate-700">
+          Venue <span class="text-red-500">*</span>
+        </label>
+        <select
+          name="venue_id"
+          class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-indigo-300 focus:bg-white focus:ring-2 focus:ring-indigo-100"
+        >
+          <option value="" disabled {% if not form.data.venue_id and not form.initial.venue_id %}selected{% endif %}>
+            Pilih venue
+          </option>
+
+          {% for v in venues %}
+            {% with v_id=v.venue_id|stringformat:"s" %}
+              <option value="{{ v_id }}"
+                {% if form.data.venue_id == v_id or form.initial.venue_id|stringformat:"s" == v_id %}selected{% endif %}>
+                {{ v.venue_name }} — {{ v.city }}
+              </option>
+            {% endwith %}
+          {% endfor %}
+        </select>
+        {% if form.errors.venue_id %}
+          <p class="mt-1 text-xs font-medium text-red-600">{{ form.errors.venue_id|striptags }}</p>
+        {% endif %}
+      </div>
+
+      <div>
+        <label class="mb-1.5 block text-sm font-semibold text-slate-700">
+          Organizer <span class="text-red-500">*</span>
+        </label>
+
+        {% if current_role == "organizer" and current_organizer %}
+          <div class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700">
+            {{ current_organizer.organizer_name }}
+          </div>
+          <input type="hidden" name="organizer_id" value="{{ current_organizer.organizer_id }}">
+          <p class="mt-1 text-xs text-slate-400">
+            Organizer otomatis mengikuti akun organizer aktif.
+          </p>
+        {% else %}
+          <select
+            name="organizer_id"
+            class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-indigo-300 focus:bg-white focus:ring-2 focus:ring-indigo-100"
+          >
+            <option value="" disabled {% if not form.data.organizer_id and not form.initial.organizer_id %}selected{% endif %}>
+              Pilih organizer
+            </option>
+
+            {% for o in organizers %}
+              {% with o_id=o.organizer_id|stringformat:"s" %}
+                <option value="{{ o_id }}"
+                  {% if form.data.organizer_id == o_id or form.initial.organizer_id|stringformat:"s" == o_id %}selected{% endif %}>
+                  {{ o.organizer_name }}
                 </option>
               {% endwith %}
             {% endfor %}
           </select>
-          {% if form.errors.venue_id %}<div class="text-danger small">{{ form.errors.venue_id }}</div>{% endif %}
-        </div>
+        {% endif %}
 
-        <div class="col-12">
-          <label class="form-label">Organizer</label>
-          {% if current_role == "organizer" and current_organizer %}
-            <input class="form-control" value="{{ current_organizer.organizer_name }}" disabled>
-            <input type="hidden" name="organizer_id" value="{{ current_organizer.organizer_id }}">
-          {% else %}
-            <select class="form-select" name="organizer_id">
-              <option value="" disabled {% if not form.data.organizer_id and not form.initial.organizer_id %}selected{% endif %}>Pilih organizer</option>
-              {% for o in organizers %}
-                {% with o_id=o.organizer_id|stringformat:"s" %}
-                  <option value="{{ o_id }}"
-                    {% if form.data.organizer_id == o_id or form.initial.organizer_id|stringformat:"s" == o_id %}selected{% endif %}>
-                    {{ o.organizer_name }}
-                  </option>
-                {% endwith %}
-              {% endfor %}
-            </select>
-          {% endif %}
-          {% if form.errors.organizer_id %}<div class="text-danger small">{{ form.errors.organizer_id }}</div>{% endif %}
-        </div>
+        {% if form.errors.organizer_id %}
+          <p class="mt-1 text-xs font-medium text-red-600">{{ form.errors.organizer_id|striptags }}</p>
+        {% endif %}
+      </div>
 
-        <div class="col-12 d-flex gap-2">
-          <button class="btn btn-dark" type="submit">{% if mode == "create" %}Buat Acara{% else %}Simpan{% endif %}</button>
-          <a class="btn btn-outline-secondary" href="{% url 'my_events' %}">Batal</a>
-        </div>
-      </form>
-    </div>
+      <!-- Action -->
+      <div class="flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:justify-end">
+        <a href="{% url 'my_events' %}"
+           class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50">
+          Batal
+        </a>
+
+        <button
+          type="submit"
+          class="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700"
+        >
+          <i data-lucide="save" class="h-4 w-4"></i>
+          {% if mode == "create" %}Buat Event{% else %}Simpan Perubahan{% endif %}
+        </button>
+      </div>
+    </form>
   </div>
-{% endblock %}
 
+</div>
+{% endblock %}

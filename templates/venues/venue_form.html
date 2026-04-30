@@ -3,46 +3,118 @@
 {% block title %}{% if mode == "create" %}Tambah Venue{% else %}Edit Venue{% endif %} - TikTakTuk{% endblock %}
 
 {% block content %}
-  <div class="d-flex align-items-center justify-content-between mb-3">
-    <h1 class="h3 mb-0">{% if mode == "create" %}Tambah Venue Baru{% else %}Edit Venue{% endif %}</h1>
-    <a class="btn btn-outline-secondary" href="{% url 'venue_list' %}">Kembali</a>
-  </div>
+<div class="mx-auto max-w-3xl space-y-6">
 
-  <div class="card">
-    <div class="card-body">
-      <form method="post" class="row g-3">
-        {% csrf_token %}
-
-        <div class="col-md-6">
-          <label class="form-label">Nama Venue</label>
-          <input class="form-control" name="venue_name" value="{{ form.venue_name.value|default:'' }}">
-          {% if form.errors.venue_name %}<div class="text-danger small">{{ form.errors.venue_name }}</div>{% endif %}
-        </div>
-
-        <div class="col-md-3">
-          <label class="form-label">Kota</label>
-          <input class="form-control" name="city" value="{{ form.city.value|default:'' }}">
-          {% if form.errors.city %}<div class="text-danger small">{{ form.errors.city }}</div>{% endif %}
-        </div>
-
-        <div class="col-md-3">
-          <label class="form-label">Kapasitas</label>
-          <input class="form-control" type="number" min="1" name="capacity" value="{{ form.capacity.value|default:'' }}">
-          {% if form.errors.capacity %}<div class="text-danger small">{{ form.errors.capacity }}</div>{% endif %}
-        </div>
-
-        <div class="col-12">
-          <label class="form-label">Alamat</label>
-          <textarea class="form-control" rows="3" name="address">{{ form.address.value|default:'' }}</textarea>
-          {% if form.errors.address %}<div class="text-danger small">{{ form.errors.address }}</div>{% endif %}
-        </div>
-
-        <div class="col-12 d-flex gap-2">
-          <button class="btn btn-dark" type="submit">{% if mode == "create" %}Tambah{% else %}Simpan{% endif %}</button>
-          <a class="btn btn-outline-secondary" href="{% url 'venue_list' %}">Batal</a>
-        </div>
-      </form>
+  <!-- Header -->
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-900">
+        {% if mode == "create" %}Tambah Venue Baru{% else %}Edit Venue{% endif %}
+      </h1>
+      <p class="mt-1 text-sm text-slate-500">
+        {% if mode == "create" %}
+          Isi data venue yang akan digunakan untuk penyelenggaraan event.
+        {% else %}
+          Perbarui informasi venue yang sudah terdaftar.
+        {% endif %}
+      </p>
     </div>
-  </div>
-{% endblock %}
 
+    <a href="{% url 'venue_list' %}"
+       class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50">
+      <i data-lucide="arrow-left" class="h-4 w-4"></i>
+      Kembali
+    </a>
+  </div>
+
+  <!-- Form Card -->
+  <div class="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+    <form method="post" class="space-y-5">
+      {% csrf_token %}
+
+      <div>
+        <label class="mb-1.5 block text-sm font-semibold text-slate-700">
+          Nama Venue <span class="text-red-500">*</span>
+        </label>
+        <input
+          type="text"
+          name="venue_name"
+          value="{{ form.venue_name.value|default:'' }}"
+          placeholder="Contoh: Jakarta Convention Center"
+          class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-indigo-300 focus:bg-white focus:ring-2 focus:ring-indigo-100"
+        >
+        {% if form.errors.venue_name %}
+          <p class="mt-1 text-xs font-medium text-red-600">{{ form.errors.venue_name }}</p>
+        {% endif %}
+      </div>
+
+      <div class="grid gap-4 md:grid-cols-2">
+        <div>
+          <label class="mb-1.5 block text-sm font-semibold text-slate-700">
+            Kota <span class="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            name="city"
+            value="{{ form.city.value|default:'' }}"
+            placeholder="Contoh: Jakarta"
+            class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-indigo-300 focus:bg-white focus:ring-2 focus:ring-indigo-100"
+          >
+          {% if form.errors.city %}
+            <p class="mt-1 text-xs font-medium text-red-600">{{ form.errors.city }}</p>
+          {% endif %}
+        </div>
+
+        <div>
+          <label class="mb-1.5 block text-sm font-semibold text-slate-700">
+            Kapasitas <span class="text-red-500">*</span>
+          </label>
+          <input
+            type="number"
+            min="1"
+            name="capacity"
+            value="{{ form.capacity.value|default:'' }}"
+            placeholder="Contoh: 1000"
+            class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-indigo-300 focus:bg-white focus:ring-2 focus:ring-indigo-100"
+          >
+          {% if form.errors.capacity %}
+            <p class="mt-1 text-xs font-medium text-red-600">{{ form.errors.capacity }}</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <div>
+        <label class="mb-1.5 block text-sm font-semibold text-slate-700">
+          Alamat <span class="text-red-500">*</span>
+        </label>
+        <textarea
+          name="address"
+          rows="4"
+          placeholder="Masukkan alamat lengkap venue"
+          class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-indigo-300 focus:bg-white focus:ring-2 focus:ring-indigo-100"
+        >{{ form.address.value|default:'' }}</textarea>
+        {% if form.errors.address %}
+          <p class="mt-1 text-xs font-medium text-red-600">{{ form.errors.address }}</p>
+        {% endif %}
+      </div>
+
+      <!-- Action -->
+      <div class="flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:justify-end">
+        <a href="{% url 'venue_list' %}"
+           class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50">
+          Batal
+        </a>
+
+        <button
+          type="submit"
+          class="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700"
+        >
+          <i data-lucide="save" class="h-4 w-4"></i>
+          {% if mode == "create" %}Tambah{% else %}Simpan{% endif %}
+        </button>
+      </div>
+    </form>
+  </div>
+
+</div>
+{% endblock %}

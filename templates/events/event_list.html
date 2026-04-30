@@ -3,64 +3,201 @@
 {% block title %}Cari Event - TikTakTuk{% endblock %}
 
 {% block content %}
-  <div class="d-flex align-items-center justify-content-between mb-3">
-    <h1 class="h3 mb-0">Jelajahi Acara</h1>
+<div class="space-y-6">
+
+  <!-- Header -->
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-900">Jelajahi Event</h1>
+      <p class="mt-1 text-sm text-slate-500">
+        Temukan event berdasarkan judul, venue, atau artist yang tampil.
+      </p>
+    </div>
+
+    {% if current_role == "admin" or current_role == "organizer" %}
+      <a href="{% url 'my_events' %}"
+         class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50">
+        <i data-lucide="settings" class="h-4 w-4"></i>
+        Kelola Event
+      </a>
+    {% endif %}
   </div>
 
-  <form class="row g-2 mb-4" method="get">
-    <div class="col-md-4">
-      <input class="form-control" name="q" placeholder="Cari judul atau artis" value="{{ request.GET.q|default:'' }}">
+  <!-- Stats -->
+  <div class="grid gap-4 md:grid-cols-3">
+    <div class="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+      <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Total Event</p>
+      <p class="mt-2 text-2xl font-bold text-slate-900">{{ events|length }}</p>
     </div>
-    <div class="col-md-3">
-      <select class="form-select" name="venue">
-        <option value="">Semua Venue</option>
-        {% for v in venues %}
-          <option value="{{ v.venue_id }}" {% if request.GET.venue == v.venue_id|stringformat:"s" %}selected{% endif %}>
-            {{ v.venue_name }}
-          </option>
-        {% endfor %}
-      </select>
+
+    <div class="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+      <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Mode Akses</p>
+      <p class="mt-2 text-2xl font-bold text-slate-900">
+        {% if current_role == "customer" %}Pembelian{% else %}Lihat{% endif %}
+      </p>
     </div>
-    <div class="col-md-3">
-      <select class="form-select" name="artist">
-        <option value="">Semua Artis</option>
-        {% for a in artists %}
-          <option value="{{ a.artist__artist_id }}" {% if request.GET.artist == a.artist__artist_id|stringformat:"s" %}selected{% endif %}>
-            {{ a.artist__name }}
-          </option>
-        {% endfor %}
-      </select>
+
+    <div class="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+      <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Filter</p>
+      <p class="mt-2 text-2xl font-bold text-slate-900">
+        {% if request.GET.q or request.GET.venue or request.GET.artist %}Aktif{% else %}Semua{% endif %}
+      </p>
     </div>
-    <div class="col-md-2 d-grid">
-      <button class="btn btn-dark" type="submit">Filter</button>
+  </div>
+
+  <!-- Filter -->
+  <form method="get" class="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+    <div class="grid gap-3 md:grid-cols-12">
+      <div class="md:col-span-4">
+        <label class="mb-1 block text-xs font-semibold text-slate-500">Pencarian</label>
+        <div class="relative">
+          <i data-lucide="search" class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"></i>
+          <input
+            type="text"
+            name="q"
+            value="{{ request.GET.q|default:'' }}"
+            placeholder="Cari judul event atau artist"
+            class="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-3 text-sm text-slate-700 outline-none transition focus:border-indigo-300 focus:bg-white focus:ring-2 focus:ring-indigo-100"
+          >
+        </div>
+      </div>
+
+      <div class="md:col-span-3">
+        <label class="mb-1 block text-xs font-semibold text-slate-500">Venue</label>
+        <select
+          name="venue"
+          class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-indigo-300 focus:bg-white focus:ring-2 focus:ring-indigo-100"
+        >
+          <option value="">Semua Venue</option>
+          {% for v in venues %}
+            <option value="{{ v.venue_id }}" {% if request.GET.venue == v.venue_id|stringformat:"s" %}selected{% endif %}>
+              {{ v.venue_name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="md:col-span-3">
+        <label class="mb-1 block text-xs font-semibold text-slate-500">Artist</label>
+        <select
+          name="artist"
+          class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-indigo-300 focus:bg-white focus:ring-2 focus:ring-indigo-100"
+        >
+          <option value="">Semua Artist</option>
+          {% for a in artists %}
+            <option value="{{ a.artist__artist_id }}" {% if request.GET.artist == a.artist__artist_id|stringformat:"s" %}selected{% endif %}>
+              {{ a.artist__name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="flex items-end md:col-span-2">
+        <button
+          type="submit"
+          class="w-full rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+        >
+          Filter
+        </button>
+      </div>
     </div>
   </form>
 
-  <div class="row g-3">
+  <!-- Event Cards -->
+  <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
     {% for e in events %}
-      <div class="col-md-6 col-lg-4">
-        <div class="card h-100">
-          <div class="card-body">
-            <h5 class="card-title mb-1">{{ e.event_title }}</h5>
-            <div class="text-muted small mb-2">
-              {{ e.event_datetime }} · {{ e.venue.venue_name }}
+      <div class="group overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+
+        <div class="flex h-32 items-center justify-center bg-gradient-to-br from-indigo-50 via-slate-50 to-blue-50">
+          <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-indigo-600 shadow-sm">
+            <i data-lucide="calendar-days" class="h-7 w-7"></i>
+          </div>
+        </div>
+
+        <div class="p-5">
+          <div class="mb-3 flex items-start justify-between gap-3">
+            <div>
+              <h2 class="line-clamp-2 text-base font-bold text-slate-900">
+                {{ e.event_title }}
+              </h2>
+              <p class="mt-1 text-xs text-slate-400">
+                Event ID: {{ e.event_id }}
+              </p>
             </div>
-            <div class="small mb-3">
-              <div><span class="text-muted">Organizer:</span> {{ e.organizer.organizer_name }}</div>
+          </div>
+
+          <div class="space-y-2 text-sm text-slate-600">
+            <div class="flex gap-2">
+              <i data-lucide="clock" class="mt-0.5 h-4 w-4 shrink-0 text-slate-400"></i>
+              <span>{{ e.event_datetime|date:"d M Y, H:i" }}</span>
             </div>
+
+            <div class="flex gap-2">
+              <i data-lucide="map-pin" class="mt-0.5 h-4 w-4 shrink-0 text-slate-400"></i>
+              <span>{{ e.venue.venue_name }} · {{ e.venue.city }}</span>
+            </div>
+
+            <div class="flex gap-2">
+              <i data-lucide="building-2" class="mt-0.5 h-4 w-4 shrink-0 text-slate-400"></i>
+              <span>{{ e.organizer.organizer_name }}</span>
+            </div>
+          </div>
+
+          <!-- Artists -->
+          <div class="mt-4 flex flex-wrap gap-2">
+            {% for ea in e.event_artists.all %}
+              <span class="inline-flex rounded-full bg-purple-50 px-3 py-1 text-xs font-semibold text-purple-700">
+                {{ ea.artist.name }}
+              </span>
+            {% empty %}
+              <span class="text-xs text-slate-400">Artist belum ditambahkan</span>
+            {% endfor %}
+          </div>
+
+          <!-- Ticket Categories -->
+          <div class="mt-4 rounded-xl bg-slate-50 p-3">
+            <p class="mb-2 text-xs font-bold uppercase tracking-wide text-slate-400">
+              Kategori Tiket
+            </p>
+
+            <div class="space-y-1">
+              {% for c in e.ticket_categories.all %}
+                <div class="flex items-center justify-between gap-3 text-xs">
+                  <span class="font-medium text-slate-600">{{ c.category_name }}</span>
+                  <span class="font-semibold text-slate-900">Rp {{ c.price }}</span>
+                </div>
+              {% empty %}
+                <p class="text-xs text-slate-400">Kategori tiket belum tersedia.</p>
+              {% endfor %}
+            </div>
+          </div>
+
+          <!-- Action -->
+          <div class="mt-5">
             {% if current_role == "customer" %}
-              <a class="btn btn-outline-dark btn-sm" href="{% url 'checkout' e.event_id %}">Beli Tiket</a>
+              <a href="{% url 'checkout' e.event_id %}"
+                 class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700">
+                <i data-lucide="ticket" class="h-4 w-4"></i>
+                Beli Tiket
+              </a>
             {% else %}
-              <span class="text-muted small">Login sebagai customer untuk beli tiket.</span>
+              <div class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-center text-xs font-medium text-slate-500">
+                Login sebagai customer untuk membeli tiket.
+              </div>
             {% endif %}
           </div>
         </div>
       </div>
     {% empty %}
-      <div class="col-12">
-        <div class="alert alert-secondary mb-0">Belum ada event.</div>
+      <div class="col-span-full rounded-2xl border border-slate-100 bg-white px-5 py-12 text-center shadow-sm">
+        <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+          <i data-lucide="calendar-x" class="h-6 w-6"></i>
+        </div>
+        <p class="mt-3 font-semibold text-slate-700">Belum ada event</p>
+        <p class="mt-1 text-sm text-slate-400">Data event akan muncul di halaman ini.</p>
       </div>
     {% endfor %}
   </div>
-{% endblock %}
 
+</div>
+{% endblock %}

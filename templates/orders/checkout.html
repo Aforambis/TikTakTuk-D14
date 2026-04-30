@@ -3,55 +3,255 @@
 {% block title %}Checkout Tiket - TikTakTuk{% endblock %}
 
 {% block content %}
-  <div class="d-flex align-items-center justify-content-between mb-3">
-    <h1 class="h3 mb-0">Checkout Tiket</h1>
-    <a class="btn btn-outline-secondary" href="{% url 'event_list' %}">Kembali</a>
-  </div>
+<div class="mx-auto max-w-5xl space-y-6">
 
-  <div class="card mb-3">
-    <div class="card-body">
-      <div class="fw-semibold">{{ event.event_title }}</div>
-      <div class="text-muted small">{{ event.event_datetime }} · {{ event.venue.venue_name }}</div>
+  <!-- Header -->
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-900">Checkout Tiket</h1>
+      <p class="mt-1 text-sm text-slate-500">
+        Pilih kategori tiket, jumlah pembelian, dan masukkan kode promo jika tersedia.
+      </p>
     </div>
+
+    <a href="{% url 'event_list' %}"
+       class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50">
+      <i data-lucide="arrow-left" class="h-4 w-4"></i>
+      Kembali
+    </a>
   </div>
 
-  <div class="card">
-    <div class="card-body">
-      <form method="post" class="row g-3">
-        {% csrf_token %}
+  <div class="grid gap-6 lg:grid-cols-3">
 
-        <div class="col-md-6">
-          <label class="form-label">Kategori Tiket</label>
-          <select class="form-select" name="category_id">
-            <option value="" disabled {% if not form.data.category_id %}selected{% endif %}>Pilih kategori</option>
-            {% for c in categories %}
-              {% with c_id=c.category_id|stringformat:"s" %}
-                <option value="{{ c_id }}" {% if form.data.category_id == c_id %}selected{% endif %}>
-                  {{ c.category_name }} — Rp {{ c.price }}
-                </option>
-              {% endwith %}
-            {% endfor %}
-          </select>
-          {% if form.errors.category_id %}<div class="text-danger small">{{ form.errors.category_id }}</div>{% endif %}
+    <!-- Event Summary -->
+    <div class="lg:col-span-1">
+      <div class="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
+        <div class="flex h-36 items-center justify-center bg-gradient-to-br from-indigo-50 via-slate-50 to-blue-50">
+          <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-white text-indigo-600 shadow-sm">
+            <i data-lucide="calendar-days" class="h-8 w-8"></i>
+          </div>
         </div>
 
-        <div class="col-md-3">
-          <label class="form-label">Jumlah Tiket</label>
-          <input class="form-control" type="number" min="1" max="10" name="quantity" value="{{ form.data.quantity|default:'1' }}">
-          {% if form.errors.quantity %}<div class="text-danger small">{{ form.errors.quantity }}</div>{% endif %}
-        </div>
+        <div class="p-5">
+          <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Event</p>
+          <h2 class="mt-2 text-lg font-bold text-slate-900">{{ event.event_title }}</h2>
 
-        <div class="col-md-3">
-          <label class="form-label">Kode Promo (opsional)</label>
-          <input class="form-control" name="promo_code" value="{{ form.data.promo_code|default:'' }}">
-        </div>
+          <div class="mt-4 space-y-3 text-sm text-slate-600">
+            <div class="flex gap-2">
+              <i data-lucide="clock" class="mt-0.5 h-4 w-4 shrink-0 text-slate-400"></i>
+              <span>{{ event.event_datetime|date:"d M Y, H:i" }} WIB</span>
+            </div>
 
-        <div class="col-12 d-flex gap-2">
-          <button class="btn btn-dark" type="submit">Buat Order (Pending)</button>
-          <a class="btn btn-outline-secondary" href="{% url 'event_list' %}">Batal</a>
+            <div class="flex gap-2">
+              <i data-lucide="map-pin" class="mt-0.5 h-4 w-4 shrink-0 text-slate-400"></i>
+              <span>{{ event.venue.venue_name }} · {{ event.venue.city }}</span>
+            </div>
+
+            <div class="flex gap-2">
+              <i data-lucide="building-2" class="mt-0.5 h-4 w-4 shrink-0 text-slate-400"></i>
+              <span>{{ event.organizer.organizer_name }}</span>
+            </div>
+          </div>
+
+          <div class="mt-5 rounded-xl bg-slate-50 p-4">
+            <p class="mb-3 text-xs font-bold uppercase tracking-wide text-slate-400">
+              Kategori Tersedia
+            </p>
+
+            <div class="space-y-2">
+              {% for c in categories %}
+                <div class="flex items-center justify-between gap-3 text-sm">
+                  <span class="font-medium text-slate-600">{{ c.category_name }}</span>
+                  <span class="font-bold text-slate-900">Rp {{ c.price|floatformat:0 }}</span>
+                </div>
+              {% empty %}
+                <p class="text-sm text-slate-400">Belum ada kategori tiket.</p>
+              {% endfor %}
+            </div>
+          </div>
         </div>
-      </form>
+      </div>
     </div>
+
+    <!-- Checkout Form -->
+    <div class="lg:col-span-2">
+      <div class="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
+        <form method="post" class="space-y-5">
+          {% csrf_token %}
+
+          <div>
+            <label class="mb-1.5 block text-sm font-semibold text-slate-700">
+              Kategori Tiket <span class="text-red-500">*</span>
+            </label>
+
+            <select
+              id="categorySelect"
+              name="category_id"
+              class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-indigo-300 focus:bg-white focus:ring-2 focus:ring-indigo-100"
+            >
+              <option value="" data-price="0" disabled {% if not form.data.category_id %}selected{% endif %}>
+                Pilih kategori tiket
+              </option>
+
+              {% for c in categories %}
+                {% with c_id=c.category_id|stringformat:"s" %}
+                  <option
+                    value="{{ c_id }}"
+                    data-price="{{ c.price }}"
+                    {% if form.data.category_id == c_id %}selected{% endif %}
+                  >
+                    {{ c.category_name }} — Rp {{ c.price|floatformat:0 }}
+                  </option>
+                {% endwith %}
+              {% endfor %}
+            </select>
+
+            {% if form.errors.category_id %}
+              <p class="mt-1 text-xs font-medium text-red-600">{{ form.errors.category_id|striptags }}</p>
+            {% endif %}
+          </div>
+
+          <div class="grid gap-4 md:grid-cols-2">
+            <div>
+              <label class="mb-1.5 block text-sm font-semibold text-slate-700">
+                Jumlah Tiket <span class="text-red-500">*</span>
+              </label>
+
+              <input
+                id="quantityInput"
+                type="number"
+                min="1"
+                max="10"
+                name="quantity"
+                value="{{ form.data.quantity|default:'1' }}"
+                class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-indigo-300 focus:bg-white focus:ring-2 focus:ring-indigo-100"
+              >
+
+              <p class="mt-1 text-xs text-slate-400">
+                Maksimal 10 tiket dalam satu checkout.
+              </p>
+
+              {% if form.errors.quantity %}
+                <p class="mt-1 text-xs font-medium text-red-600">{{ form.errors.quantity|striptags }}</p>
+              {% endif %}
+            </div>
+
+            <div>
+              <label class="mb-1.5 block text-sm font-semibold text-slate-700">
+                Kode Promo
+              </label>
+
+              <input
+                type="text"
+                name="promo_code"
+                value="{{ form.data.promo_code|default:'' }}"
+                placeholder="Opsional"
+                class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm uppercase text-slate-700 outline-none transition focus:border-indigo-300 focus:bg-white focus:ring-2 focus:ring-indigo-100"
+              >
+
+              <p class="mt-1 text-xs text-slate-400">
+                Kosongkan jika tidak memiliki kode promo.
+              </p>
+            </div>
+          </div>
+
+          <!-- Price Preview -->
+          <div class="rounded-2xl border border-slate-100 bg-slate-50 p-5">
+            <div class="mb-4 flex items-center justify-between">
+              <div>
+                <p class="text-sm font-bold text-slate-900">Ringkasan Pembayaran</p>
+                <p class="mt-1 text-xs text-slate-400">Estimasi sebelum validasi promo oleh sistem.</p>
+              </div>
+
+              <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-indigo-600 shadow-sm">
+                <i data-lucide="wallet" class="h-5 w-5"></i>
+              </div>
+            </div>
+
+            <div class="space-y-3 text-sm">
+              <div class="flex justify-between gap-4">
+                <span class="text-slate-500">Harga per tiket</span>
+                <span id="pricePreview" class="font-semibold text-slate-800">Rp 0</span>
+              </div>
+
+              <div class="flex justify-between gap-4">
+                <span class="text-slate-500">Jumlah tiket</span>
+                <span id="qtyPreview" class="font-semibold text-slate-800">1</span>
+              </div>
+
+              <div class="border-t border-slate-200 pt-3">
+                <div class="flex justify-between gap-4">
+                  <span class="font-bold text-slate-900">Estimasi Subtotal</span>
+                  <span id="subtotalPreview" class="font-extrabold text-indigo-600">Rp 0</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action -->
+          <div class="flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:justify-end">
+            <a href="{% url 'event_list' %}"
+               class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50">
+              Batal
+            </a>
+
+            <button
+              type="submit"
+              class="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700"
+            >
+              <i data-lucide="shopping-cart" class="h-4 w-4"></i>
+              Buat Order Pending
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
   </div>
+</div>
 {% endblock %}
 
+{% block extra_scripts %}
+<script>
+  function formatRupiah(value) {
+    const number = Number(value || 0);
+
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      maximumFractionDigits: 0
+    }).format(number);
+  }
+
+  function updateCheckoutPreview() {
+    const categorySelect = document.getElementById('categorySelect');
+    const quantityInput = document.getElementById('quantityInput');
+
+    if (!categorySelect || !quantityInput) return;
+
+    const selectedOption = categorySelect.options[categorySelect.selectedIndex];
+    const price = Number(selectedOption?.dataset?.price || 0);
+    const qty = Number(quantityInput.value || 1);
+    const subtotal = price * qty;
+
+    document.getElementById('pricePreview').textContent = formatRupiah(price);
+    document.getElementById('qtyPreview').textContent = qty;
+    document.getElementById('subtotalPreview').textContent = formatRupiah(subtotal);
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    const categorySelect = document.getElementById('categorySelect');
+    const quantityInput = document.getElementById('quantityInput');
+
+    if (categorySelect) {
+      categorySelect.addEventListener('change', updateCheckoutPreview);
+    }
+
+    if (quantityInput) {
+      quantityInput.addEventListener('input', updateCheckoutPreview);
+    }
+
+    updateCheckoutPreview();
+  });
+</script>
+{% endblock %}

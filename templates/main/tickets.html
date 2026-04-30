@@ -38,7 +38,6 @@
 
   <!-- Search & Filter -->
   <form method="get" class="flex gap-3">
-    <input type="hidden" name="role" value="{{ role }}">
     <div class="flex-1 relative">
       <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-3.5 h-3.5"></i>
       <input type="text" name="q" value="{{ q }}" placeholder="Cari kode tiket atau nama acara..."
@@ -111,11 +110,11 @@
         <!-- Actions (Admin only) -->
         {% if role == 'admin' %}
         <div class="flex gap-2 flex-shrink-0">
-          <button onclick="openEditModal('{{ ticket.ticket_id }}', '{{ ticket.ticket_code }}', '{{ ticket.status }}')"
+          <button onclick="openEditModal('{{ ticket.ticket_id }}', '{{ ticket.ticket_code|escapejs }}', '{{ ticket.status|escapejs }}')"
             class="p-2 rounded-xl hover:bg-indigo-50 text-indigo-500 transition-colors border border-indigo-100">
             <i data-lucide="edit" class="w-3.5 h-3.5"></i>
           </button>
-          <button onclick="openDeleteModal('{{ ticket.ticket_id }}', '{{ ticket.ticket_code }}')"
+          <button onclick="openDeleteModal('{{ ticket.ticket_id }}', '{{ ticket.ticket_code|escapejs }}')"
             class="p-2 rounded-xl hover:bg-red-50 text-red-400 transition-colors border border-red-100">
             <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
           </button>
@@ -143,7 +142,7 @@
       </button>
     </div>
     <div class="p-6">
-      <form method="post" action="/tiket/create">
+      <form method="post" action="{% url 'create_ticket' %}">
         {% csrf_token %}
         <input type="hidden" name="role" value="{{ role }}">
         <div class="mb-4">
@@ -261,12 +260,12 @@
   function openEditModal(ticketId, ticketCode, status) {
     document.getElementById('editTicketCode').value = ticketCode;
     document.getElementById('editStatusSelect').value = status;
-    document.getElementById('editForm').action = '/tiket/update/' + ticketId;
+    document.getElementById('editForm').action = `/tickets/${ticketId}/update/`;
     openModal('editModal');
   }
   function openDeleteModal(ticketId, ticketCode) {
     document.getElementById('deleteTicketCode').textContent = ticketCode;
-    document.getElementById('deleteForm').action = '/tiket/delete/' + ticketId;
+    document.getElementById('deleteForm').action = `/tickets/${ticketId}/delete/`;
     openModal('deleteModal');
   }
   // Close modal on backdrop click
