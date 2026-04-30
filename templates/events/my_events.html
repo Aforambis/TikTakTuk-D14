@@ -27,25 +27,20 @@
     </a>
   </div>
 
-  <!-- Stats -->
-  <div class="grid gap-4 md:grid-cols-3">
-    <div class="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
-      <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Total Event</p>
-      <p class="mt-2 text-2xl font-bold text-slate-900">{{ events|length }}</p>
-    </div>
-
-    <div class="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
-      <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Mode Akses</p>
-      <p class="mt-2 text-2xl font-bold text-slate-900">
-        {% if current_role == "admin" %}Admin{% else %}Organizer{% endif %}
-      </p>
-    </div>
-
-    <div class="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
-      <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Hak Aksi</p>
-      <p class="mt-2 text-2xl font-bold text-slate-900">Create/Edit</p>
-    </div>
+<!-- Stats -->
+<div class="grid gap-4 md:grid-cols-2">
+  <div class="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+    <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Total Event</p>
+    <p class="mt-2 text-2xl font-bold text-slate-900">{{ events|length }}</p>
   </div>
+
+  <div class="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+    <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Status Pengelolaan</p>
+    <p class="mt-2 text-2xl font-bold text-slate-900">
+      {% if events %}Aktif{% else %}Belum Ada{% endif %}
+    </p>
+  </div>
+</div>
 
   <!-- Table -->
   <div class="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
