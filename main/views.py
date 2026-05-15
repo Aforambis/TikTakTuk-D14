@@ -12,6 +12,8 @@ from django.http import Http404, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
+from django.db import connection, DatabaseError
+from django.shortcuts import render
 
 from .data import get_data
 
@@ -941,31 +943,70 @@ class VenueFilterForm(forms.Form):
     q = forms.CharField(required=False, max_length=200)
     city = forms.CharField(required=False, max_length=100)
 
+def _venue_row_to_dict(row):
+    return {
+        "venue_id": row[0],
+        "venue_name": row[1],
+        "capacity": row[2],
+        "address": row[3],
+        "city": row[4],
+    }
+
+def _db_error_message(error):
+    return str(error).strip().split("\n")[0]
+
+def _get_venue_by_id(venue_id):
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT venue_id, venue_name, capacity, address, city
+            FROM venue
+            WHERE venue_id = %s
+        """, [venue_id])
+        row = cursor.fetchone()
+
+    if not row:
+        raise Http404()
+
+    return _venue_row_to_dict(row)
 
 def venue_list(request):
-    from .models import Venue
-
     form = VenueFilterForm(request.GET)
     form.is_valid()
 
-    qs = Venue.objects.order_by("venue_name")
-
     q = (form.cleaned_data.get("q") or "").strip()
-    if q:
-        qs = qs.filter(
-            Q(venue_name__icontains=q)
-            | Q(address__icontains=q)
-        )
-
     city = (form.cleaned_data.get("city") or "").strip()
-    if city:
-        qs = qs.filter(city__iexact=city)
 
-    cities = (
-        Venue.objects.values_list("city", flat=True)
-        .distinct()
-        .order_by("city")
-    )
+    where_clauses = []
+    params = []
+
+    if q:
+        where_clauses.append("(venue_name ILIKE %s OR address ILIKE %s)")
+        params.extend([f"%{q}%", f"%{q}%"])
+
+    if city:
+        where_clauses.append("LOWER(city) = LOWER(%s)")
+        params.append(city)
+
+    where_sql = ""
+    if where_clauses:
+        where_sql = "WHERE " + " AND ".join(where_clauses)
+
+    with connection.cursor() as cursor:
+        cursor.execute(f"""
+            SELECT venue_id, venue_name, capacity, address, city
+            FROM venue
+            {where_sql}
+            ORDER BY venue_name
+        """, params)
+        venues = [_venue_row_to_dict(row) for row in cursor.fetchall()]
+
+        cursor.execute("""
+            SELECT DISTINCT city
+            FROM venue
+            WHERE city IS NOT NULL AND city <> ''
+            ORDER BY city
+        """)
+        cities = [row[0] for row in cursor.fetchall()]
 
     can_manage = _current_role(request) in {"admin", "organizer"}
 
@@ -973,7 +1014,7 @@ def venue_list(request):
         request,
         "venues/venue_list.html",
         {
-            "venues": qs,
+            "venues": venues,
             "filter_form": form,
             "cities": cities,
             "can_manage": can_manage,
@@ -982,24 +1023,45 @@ def venue_list(request):
         },
     )
 
-
 def venue_create(request):
     _require_roles(request, {"admin", "organizer"})
 
-    from .models import Venue
+    error_msg = None
 
     if request.method == "POST":
         form = VenueForm(request.POST)
 
         if form.is_valid():
-            Venue.objects.create(
-                venue_name=form.cleaned_data["venue_name"],
-                capacity=form.cleaned_data["capacity"],
-                address=form.cleaned_data["address"],
-                city=form.cleaned_data["city"],
-            )
+            try:
+                with connection.cursor() as cursor:
+                    cursor.execute("""
+                        INSERT INTO venue (
+                            venue_id,
+                            venue_name,
+                            capacity,
+                            address,
+                            city
+                        )
+                        VALUES (
+                            gen_random_uuid(),
+                            %s,
+                            %s,
+                            %s,
+                            %s
+                        )
+                    """, [
+                        form.cleaned_data["venue_name"],
+                        form.cleaned_data["capacity"],
+                        form.cleaned_data["address"],
+                        form.cleaned_data["city"],
+                    ])
 
-            return redirect("venue_list")
+                messages.success(request, "Venue berhasil ditambahkan.")
+                return redirect("venue_list")
+
+            except DatabaseError as e:
+                error_msg = _db_error_message(e)
+                messages.error(request, error_msg)
     else:
         form = VenueForm()
 
@@ -1009,35 +1071,55 @@ def venue_create(request):
         {
             "form": form,
             "mode": "create",
+            "error": error_msg,
+            "error_message": error_msg,
+            "current_role": _current_role(request),
+            "role": _current_role(request),
         },
     )
-
 
 def venue_update(request, venue_id):
     _require_roles(request, {"admin", "organizer"})
 
-    from .models import Venue
-
-    venue = get_object_or_404(Venue, venue_id=venue_id)
+    venue = _get_venue_by_id(venue_id)
+    error_msg = None
 
     if request.method == "POST":
         form = VenueForm(request.POST)
 
         if form.is_valid():
-            venue.venue_name = form.cleaned_data["venue_name"]
-            venue.capacity = form.cleaned_data["capacity"]
-            venue.address = form.cleaned_data["address"]
-            venue.city = form.cleaned_data["city"]
-            venue.save()
+            try:
+                with connection.cursor() as cursor:
+                    cursor.execute("""
+                        UPDATE venue
+                        SET
+                            venue_name = %s,
+                            capacity = %s,
+                            address = %s,
+                            city = %s
+                        WHERE venue_id = %s
+                    """, [
+                        form.cleaned_data["venue_name"],
+                        form.cleaned_data["capacity"],
+                        form.cleaned_data["address"],
+                        form.cleaned_data["city"],
+                        venue_id,
+                    ])
 
-            return redirect("venue_list")
+                messages.success(request, "Venue berhasil diperbarui.")
+                return redirect("venue_list")
+
+            except DatabaseError as e:
+                error_msg = _db_error_message(e)
+                messages.error(request, error_msg)
+
     else:
         form = VenueForm(
             initial={
-                "venue_name": venue.venue_name,
-                "capacity": venue.capacity,
-                "address": venue.address,
-                "city": venue.city,
+                "venue_name": venue["venue_name"],
+                "capacity": venue["capacity"],
+                "address": venue["address"],
+                "city": venue["city"],
             }
         )
 
@@ -1048,29 +1130,45 @@ def venue_update(request, venue_id):
             "form": form,
             "mode": "update",
             "venue": venue,
+            "error": error_msg,
+            "error_message": error_msg,
+            "current_role": _current_role(request),
+            "role": _current_role(request),
         },
     )
-
 
 def venue_delete(request, venue_id):
     _require_roles(request, {"admin", "organizer"})
 
-    from .models import Venue
-
-    venue = get_object_or_404(Venue, venue_id=venue_id)
+    venue = _get_venue_by_id(venue_id)
+    error_msg = None
 
     if request.method == "POST":
-        venue.delete()
-        return redirect("venue_list")
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("""
+                    DELETE FROM venue
+                    WHERE venue_id = %s
+                """, [venue_id])
+
+            messages.success(request, "Venue berhasil dihapus.")
+            return redirect("venue_list")
+
+        except DatabaseError as e:
+            error_msg = _db_error_message(e)
+            messages.error(request, error_msg)
 
     return render(
         request,
         "venues/venue_delete.html",
         {
             "venue": venue,
+            "error": error_msg,
+            "error_message": error_msg,
+            "current_role": _current_role(request),
+            "role": _current_role(request),
         },
     )
-
 
 # =========================================================
 # Artist
