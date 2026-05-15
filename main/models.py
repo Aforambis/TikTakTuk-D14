@@ -176,7 +176,11 @@ class Order(models.Model):
 
     order_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     order_date = models.DateTimeField()
-    payment_status = models.CharField(max_length=20, choices=PaymentStatus.choices)
+    payment_status = models.CharField(
+        max_length=20,
+        choices=PaymentStatus.choices,
+        default=PaymentStatus.PENDING,
+    )
     total_amount = models.DecimalField(
         max_digits=12,
         decimal_places=2,
