@@ -14,6 +14,7 @@ from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 
 from .data import get_data
+from django.db import connection, DatabaseError
 
 
 ALLOWED_ROLES = {"guest", "admin", "organizer", "customer"}
@@ -727,6 +728,7 @@ class EventForm(forms.Form):
     )
     venue_id = forms.UUIDField()
     organizer_id = forms.UUIDField(required=False)
+    artist_id = forms.UUIDField()
 
 
 def event_list(request):
@@ -803,52 +805,88 @@ def my_events(request):
 def event_create(request):
     _require_roles(request, {"admin", "organizer"})
 
-    from .models import Event, Organizer, Venue
+    from django.db import connection, DatabaseError
 
     if request.method == "POST":
         form = EventForm(request.POST)
 
         if form.is_valid():
-            venue = get_object_or_404(
-                Venue,
-                venue_id=form.cleaned_data["venue_id"],
-            )
+            venue_id = form.cleaned_data["venue_id"]
 
             if _current_role(request) == "organizer":
-                organizer = _get_current_organizer(request)
+                current_org = _get_current_organizer(request)
+                organizer_id = current_org.organizer_id if current_org else None
             else:
                 organizer_id = form.cleaned_data.get("organizer_id")
-                if organizer_id:
-                    organizer = get_object_or_404(
-                        Organizer,
-                        organizer_id=organizer_id,
-                    )
-                else:
-                    organizer = _get_current_organizer(request)
+                if not organizer_id:
+                    current_org = _get_current_organizer(request)
+                    organizer_id = current_org.organizer_id if current_org else None
 
-            Event.objects.create(
-                event_title=form.cleaned_data["event_title"],
-                event_datetime=form.cleaned_data["event_datetime"],
-                venue=venue,
-                organizer=organizer,
-            )
+            event_title = form.cleaned_data["event_title"]
+            event_datetime = form.cleaned_data["event_datetime"]
+            artist_id = form.cleaned_data.get("artist_id")
 
-            return redirect("my_events")
+            try:
+                with connection.cursor() as cursor:
+                    cursor.execute("""
+                        INSERT INTO event (event_id, event_title, event_datetime, venue_id, organizer_id)
+                        VALUES (gen_random_uuid(), %s, %s, %s, %s)
+                        RETURNING event_id
+                    """, [event_title, event_datetime, venue_id, organizer_id])
+                    new_event_id = cursor.fetchone()[0]
+
+                    if artist_id:
+                        cursor.execute("""
+                            INSERT INTO event_artist (event_id, artist_id)
+                            VALUES (%s, %s)
+                        """, [new_event_id, artist_id])
+
+                messages.success(request, "Event dan artis berhasil ditambahkan!")
+                return redirect("my_events")
+
+            except DatabaseError as e:
+                messages.error(request, str(e))
+
     else:
-        initial = {}
-
+        initial = {
+            "event_title": "",
+            "event_datetime": "",
+            "venue_id": "",
+            "organizer_id": "",
+            "artist_id": "",
+        }
         if _current_role(request) == "organizer":
-            initial["organizer_id"] = _get_current_organizer(request).organizer_id
-
+            current_org = _get_current_organizer(request)
+            if current_org:
+                initial["organizer_id"] = current_org.organizer_id
         form = EventForm(initial=initial)
+
+    venues = []
+    organizers = []
+    artists = []
+
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT venue_id, venue_name FROM venue ORDER BY venue_name")
+            venues = [{"venue_id": str(row[0]), "venue_name": row[1]} for row in cursor.fetchall()]
+
+            cursor.execute("SELECT organizer_id, organizer_name FROM organizer ORDER BY organizer_name")
+            organizers = [{"organizer_id": str(row[0]), "organizer_name": row[1]} for row in cursor.fetchall()]
+
+            cursor.execute("SELECT artist_id, name, genre FROM artist ORDER BY name")
+            columns = [col[0] for col in cursor.description]
+            artists = [dict(zip(columns, row)) for row in cursor.fetchall()]
+    except DatabaseError as e:
+        messages.error(request, f"Gagal mengambil data form: {str(e)}")
 
     return render(
         request,
         "events/event_form.html",
         {
             "form": form,
-            "venues": Venue.objects.order_by("venue_name"),
-            "organizers": Organizer.objects.order_by("organizer_name"),
+            "venues": venues,
+            "organizers": organizers,
+            "artists": artists,
             "current_role": _current_role(request),
             "role": _current_role(request),
             "current_organizer": (
@@ -859,7 +897,6 @@ def event_create(request):
             "mode": "create",
         },
     )
-
 
 def event_update(request, event_id):
     _require_roles(request, {"admin", "organizer"})
@@ -1080,12 +1117,14 @@ class ArtistForm(forms.Form):
     name = forms.CharField(max_length=100)
     genre = forms.CharField(max_length=100, required=False)
 
-
 def artist_list(request):
-    from .models import Artist
-
     role = _current_role(request)
-    artists = Artist.objects.order_by("name")
+    
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT * FROM artist ORDER BY name")
+        columns = [col[0] for col in cursor.description]
+        artists = [dict(zip(columns, row)) for row in cursor.fetchall()]
+
 
     return render(
         request,
@@ -1102,18 +1141,23 @@ def artist_list(request):
 def artist_create(request):
     _require_roles(request, {"admin"})
 
-    from .models import Artist
 
     if request.method == "POST":
         form = ArtistForm(request.POST)
 
         if form.is_valid():
-            Artist.objects.create(
-                name=form.cleaned_data["name"],
-                genre=(form.cleaned_data.get("genre") or "").strip() or None,
-            )
+            name= form.cleaned_data["name"]
+            genre = (form.cleaned_data.get("genre") or "").strip() or None
 
-            return redirect("artist_list")
+            try:
+                with connection.cursor() as cursor:
+                    cursor.execute("""
+                        INSERT INTO artist (artist_id, name, genre)
+                        VALUES (gen_random_uuid(), %s, %s)
+                    """, [name, genre])
+                return redirect("artist_list")
+            except DatabaseError as e:
+                messages.error(request, f"Error Database: {str(e)}")
     else:
         form = ArtistForm()
 
@@ -1130,26 +1174,32 @@ def artist_create(request):
 def artist_update(request, artist_id):
     _require_roles(request, {"admin"})
 
-    from .models import Artist
-
-    artist = get_object_or_404(Artist, artist_id=artist_id)
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT artist_id, name, genre FROM artist WHERE artist_id = %s", [artist_id])
+        row = cursor.fetchone()
+        if not row:
+            raise Http404("Artist tidak ditemukan")
+        artist = {"artist_id": row[0], "name": row[1], "genre": row[2]}
 
     if request.method == "POST":
         form = ArtistForm(request.POST)
 
         if form.is_valid():
-            artist.name = form.cleaned_data["name"]
-            artist.genre = (form.cleaned_data.get("genre") or "").strip() or None
-            artist.save()
-
-            return redirect("artist_list")
+            name = form.cleaned_data["name"]
+            genre = (form.cleaned_data.get("genre") or "").strip() or None
+            
+            try:
+                with connection.cursor() as cursor:
+                    cursor.execute("""
+                        UPDATE artist 
+                        SET name = %s, genre = %s
+                        WHERE artist_id = %s
+                    """, [name, genre, artist_id])
+                return redirect("artist_list")
+            except DatabaseError as e:
+                messages.error(request, f"Error Database: {str(e)}")
     else:
-        form = ArtistForm(
-            initial={
-                "name": artist.name,
-                "genre": artist.genre,
-            }
-        )
+        form = ArtistForm(initial={"name": artist["name"], "genre": artist["genre"]})
 
     return render(
         request,
@@ -1165,13 +1215,20 @@ def artist_update(request, artist_id):
 def artist_delete(request, artist_id):
     _require_roles(request, {"admin"})
 
-    from .models import Artist
-
-    artist = get_object_or_404(Artist, artist_id=artist_id)
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT artist_id, name FROM artist WHERE artist_id = %s", [artist_id])
+        row = cursor.fetchone()
+        if not row:
+            raise Http404("Artist tidak ditemukan")
+        artist = {"artist_id": row[0], "name": row[1]}
 
     if request.method == "POST":
-        artist.delete()
-        return redirect("artist_list")
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("DELETE FROM artist WHERE artist_id = %s", [artist_id])
+            return redirect("artist_list")
+        except DatabaseError as e:
+            messages.error(request, f"Gagal menghapus: {str(e)}")
 
     return render(
         request,
@@ -1616,24 +1673,9 @@ def delete_promotion(request, promo_id):
 # Ticket Categories from Pengguna_Hijau
 # =========================================================
 
-TICKET_CATEGORIES_MEMORY = None
-
-
-def get_ticket_categories_memory():
-    global TICKET_CATEGORIES_MEMORY
-
-    if TICKET_CATEGORIES_MEMORY is None:
-        TICKET_CATEGORIES_MEMORY = get_data()["ticket_categories"]
-
-    return TICKET_CATEGORIES_MEMORY
-
-
 @csrf_exempt
 def category_page(request):
-    data = get_data()
     user = get_current_user(request)
-
-    categories_mem = get_ticket_categories_memory()
     error_message = None
     success_message = None
 
@@ -1642,112 +1684,103 @@ def category_page(request):
             error_message = "Akses ditolak. Hanya Admin yang dapat mengelola kategori tiket."
         else:
             action = request.POST.get("action")
+            category_id = request.POST.get("category_id")
+            event_id = request.POST.get("event_id")
+            category_name = request.POST.get("category_name")
+            price_str = request.POST.get("price")
+            quota_str = request.POST.get("quota")
 
-            if action == "hapus":
-                category_id = request.POST.get("category_id")
-                categories_mem[:] = [
-                    cat for cat in categories_mem
-                    if cat["category_id"] != category_id
-                ]
-                success_message = "Data kategori tiket berhasil dihapus."
-
-            elif action in ["tambah", "edit"]:
-                event_id = request.POST.get("event_id")
-                category_name = request.POST.get("category_name")
-                price_str = request.POST.get("price")
-                quota_str = request.POST.get("quota")
-                category_id = request.POST.get("category_id")
-
-                if not event_id or not category_name or not price_str or not quota_str:
-                    error_message = "Gagal. Seluruh field wajib diisi."
-                else:
-                    try:
-                        price = int(price_str)
-                        new_quota = int(quota_str)
-                    except ValueError:
-                        error_message = "Harga dan kuota harus berupa angka."
-                    else:
-                        if new_quota <= 0:
-                            error_message = "Gagal. Kuota tiket harus lebih dari 0."
-                        elif price < 0:
-                            error_message = "Gagal. Harga tiket tidak boleh negatif."
+            try:
+                with connection.cursor() as cursor:
+                    if action == "hapus" and category_id:
+                        cursor.execute("DELETE FROM ticket_category WHERE category_id = %s", [category_id])
+                        success_message = "Data kategori tiket berhasil dihapus."
+                        
+                    elif action in ["tambah", "edit"]:
+                        if not event_id or not category_name or not price_str or not quota_str:
+                            error_message = "Gagal. Seluruh field wajib diisi."
                         else:
-                            event = next(
-                                (e for e in data["events"] if e["event_id"] == event_id),
-                                None,
-                            )
-                            venue = None
+                            price = int(price_str)
+                            quota = int(quota_str)
+                            
+                            if quota <= 0:
+                                error_message = "Gagal. Kuota tiket harus lebih dari 0."
+                            elif price < 0:
+                                error_message = "Gagal. Harga tiket tidak boleh negatif."
+                            else:
+                                # Hitung total kuota berjalan + kapasitas venue untuk validasi
+                                cursor.execute("""
+                                    SELECT v.capacity, v.venue_name, COALESCE(SUM(tc.quota), 0)
+                                    FROM event e
+                                    JOIN venue v ON e.venue_id = v.venue_id
+                                    LEFT JOIN ticket_category tc ON tc.event_id = e.event_id
+                                    WHERE e.event_id = %s
+                                    GROUP BY v.capacity, v.venue_name
+                                """, [event_id])
+                                
+                                venue_info = cursor.fetchone()
+                                if venue_info:
+                                    capacity, venue_name, current_quota = venue_info
+                                    
+                                    # Jika update, kurangi kuota lama dari perhitungan
+                                    if action == "edit":
+                                        cursor.execute("SELECT quota FROM ticket_category WHERE category_id = %s", [category_id])
+                                        old_quota_row = cursor.fetchone()
+                                        if old_quota_row:
+                                            current_quota -= old_quota_row[0]
+                                            
+                                    if current_quota + quota > capacity:
+                                        error_message = f"Gagal menyimpan. Total kuota tiket ({current_quota + quota}) melebihi kapasitas {venue_name} ({capacity} kursi)."
+                                    else:
+                                        if action == "tambah":
+                                            cursor.execute("""
+                                                INSERT INTO ticket_category (category_id, event_id, category_name, price, quota)
+                                                VALUES (gen_random_uuid(), %s, %s, %s, %s)
+                                            """, [event_id, category_name, price, quota])
+                                            success_message = f"Kategori tiket '{category_name}' berhasil ditambahkan."
+                                        elif action == "edit":
+                                            cursor.execute("""
+                                                UPDATE ticket_category 
+                                                SET event_id = %s, category_name = %s, price = %s, quota = %s
+                                                WHERE category_id = %s
+                                            """, [event_id, category_name, price, quota, category_id])
+                                            success_message = f"Kategori tiket '{category_name}' berhasil diperbarui."
+            except DatabaseError as e:
+                error_message = f"Error Database: {str(e)}"
 
-                            if event:
-                                venue = next(
-                                    (v for v in data["venues"] if v["venue_id"] == event["venue_id"]),
-                                    None,
-                                )
-
-                            venue_capacity = venue.get("capacity", 0) if venue else 0
-
-                            current_event_quota = 0
-                            for cat in categories_mem:
-                                if cat["event_id"] == event_id:
-                                    if action == "edit" and cat["category_id"] == category_id:
-                                        continue
-                                    current_event_quota += cat["quota"]
-
-                            if current_event_quota + new_quota > venue_capacity:
-                                venue_name = venue["venue_name"] if venue else "venue terkait"
-                                error_message = (
-                                    f"Gagal menyimpan. Total kuota tiket "
-                                    f"({current_event_quota + new_quota}) melebihi kapasitas "
-                                    f"{venue_name} ({venue_capacity} kursi)."
-                                )
-
-                if not error_message:
-                    if action == "tambah":
-                        categories_mem.append(
-                            {
-                                "category_id": str(uuid.uuid4()),
-                                "category_name": category_name,
-                                "event_id": event_id,
-                                "price": price,
-                                "quota": new_quota,
-                            }
-                        )
-                        success_message = f"Kategori tiket '{category_name}' berhasil ditambahkan."
-
-                    elif action == "edit":
-                        for cat in categories_mem:
-                            if cat["category_id"] == category_id:
-                                cat["event_id"] = event_id
-                                cat["category_name"] = category_name
-                                cat["price"] = price
-                                cat["quota"] = new_quota
-                                break
-
-                        success_message = f"Kategori tiket '{category_name}' berhasil diperbarui."
-
-    event_map = {
-        e["event_id"]: e["event_title"]
-        for e in data["events"]
-    }
-
+    # GET REQUEST DATA
     categories = []
     total_quota = 0
     max_price = 0
-
-    for cat in categories_mem:
-        item = cat.copy()
-        item["event_name"] = event_map.get(cat["event_id"], "-")
-        categories.append(item)
-
-        total_quota += item["quota"]
-        max_price = max(max_price, item["price"])
-
-    categories.sort(
-        key=lambda item: (
-            item["event_name"].lower(),
-            item["category_name"].lower(),
-        )
-    )
+    events = []
+    
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT event_id, event_title FROM event ORDER BY event_title")
+            events = [{"event_id": row[0], "event_title": row[1]} for row in cursor.fetchall()]
+            
+            cursor.execute("""
+                SELECT tc.category_id, tc.category_name, tc.price, tc.quota, tc.event_id, e.event_title
+                FROM ticket_category tc
+                JOIN event e ON tc.event_id = e.event_id
+                ORDER BY e.event_title ASC, tc.category_name ASC
+            """)
+            
+            for row in cursor.fetchall():
+                cat = {
+                    "category_id": str(row[0]),
+                    "category_name": row[1],
+                    "price": row[2],
+                    "quota": row[3],
+                    "event_id": str(row[4]),
+                    "event_name": row[5]
+                }
+                categories.append(cat)
+                total_quota += cat["quota"]
+                max_price = max(max_price, cat["price"])
+                
+    except DatabaseError as e:
+        error_message = str(e)
 
     return render(
         request,
@@ -1759,10 +1792,23 @@ def category_page(request):
             "current_page": "kategori",
             "page_title": "Kategori Tiket",
             "categories": categories,
-            "events": data["events"],
+            "events": events,
             "total_quota": total_quota,
             "max_price": max_price,
             "error_message": error_message,
             "success_message": success_message,
         },
     )
+
+def check_event_quota(request, event_id):
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT * FROM get_ticket_quota(%s)", [event_id])
+            columns = [col[0] for col in cursor.description]
+            quotas = [dict(zip(columns, row)) for row in cursor.fetchall()]
+
+        return render(request, "events/quota_detail.html", {"quotas": quotas})
+
+    except DatabaseError as e:
+        messages.error(request, str(e))
+        return redirect("event_list")
