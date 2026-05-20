@@ -80,6 +80,10 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
+        'USER': 'postgres',
+        'PASSWORD' : 'ajsnwrm23p1',
+        'HOST': 'db.rfyomxjxeitzthkgvdpb.supabase.co',
+        'PORT': '5432'
     }
 }
 

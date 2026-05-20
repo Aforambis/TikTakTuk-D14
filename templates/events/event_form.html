@@ -131,6 +131,31 @@
         {% endif %}
       </div>
 
+      <div>
+        <label class="mb-1.5 block text-sm font-semibold text-slate-700">
+          Artist <span class="text-red-500">*</span>
+        </label>
+        <select
+          name="artist_id"
+          class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-indigo-300 focus:bg-white focus:ring-2 focus:ring-indigo-100"
+        >
+          <option value="" disabled {% if not form.data.artist_id and not form.initial.artist_id %}selected{% endif %}>
+            Pilih artist
+          </option>
+          {% for a in artists %}
+            {% with a_id=a.artist_id|stringformat:"s" %}
+              <option value="{{ a_id }}"
+                {% if form.data.artist_id == a_id or form.initial.artist_id|stringformat:"s" == a_id %}selected{% endif %}>
+                {{ a.name }}{% if a.genre %} — {{ a.genre }}{% endif %}
+              </option>
+            {% endwith %}
+          {% endfor %}
+        </select>
+        {% if form.errors.artist_id %}
+          <p class="mt-1 text-xs font-medium text-red-600">{{ form.errors.artist_id|striptags }}</p>
+        {% endif %}
+      </div>
+
       <!-- Action -->
       <div class="flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:justify-end">
         <a href="{% url 'my_events' %}"
