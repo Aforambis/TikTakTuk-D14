@@ -28,39 +28,36 @@ LOGIN_ROLES = {"admin", "organizer", "customer"}
 # =========================================================
 
 def _authenticate_dummy_account(request, username: str, password: str):
+    from .models import UserAccount, AccountRole
+
     username = (username or "").strip()
     password = (password or "").strip()
 
     if not username or not password:
         return None
 
-    data = get_data()
-    credentials = data.get("user_credentials", {})
-    registered_accounts = request.session.get("registered_accounts", {})
-    credentials = {**credentials, **registered_accounts}
+    try:
+        user = UserAccount.objects.get(username__iexact=username)
+    except UserAccount.DoesNotExist:
+        return None
 
-    # Username dibuat case-insensitive agar input seperti "Admin" tetap valid.
-    for stored_username, account in credentials.items():
-        if stored_username.lower() != username.lower():
-            continue
+    if user.password != password:
+        return None
 
-        if account.get("password") != password:
-            return None
+    # Ambil role dari database
+    account_role = AccountRole.objects.filter(user=user).select_related("role").first()
+    if not account_role:
+        return None
 
-        role = str(account.get("role", "customer")).strip().lower()
-        if role not in LOGIN_ROLES:
-            return None
+    role = account_role.role.role_name.strip().lower()
+    if role not in LOGIN_ROLES:
+        return None
 
-        return {
-            "username": stored_username,
-            "role": role,
-            "name": account.get("name") or stored_username,
-        }
-
-    return None
-
-
-
+    return {
+        "username": user.username,
+        "role": role,
+        "name": user.username,
+    }
 def _clear_auth_session(request):
     for key in ("role", "username", "display_name", "organizer_id", "customer_id"):
         request.session.pop(key, None)

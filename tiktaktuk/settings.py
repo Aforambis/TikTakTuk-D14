@@ -78,12 +78,12 @@ WSGI_APPLICATION = 'tiktaktuk.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'postgres',
         'USER': 'postgres',
-        'PASSWORD' : 'ajsnwrm23p1',
+        'PASSWORD': 'ajsnwrm23p1',
         'HOST': 'db.rfyomxjxeitzthkgvdpb.supabase.co',
-        'PORT': '5432'
+        'PORT': '5432',
     }
 }
 
