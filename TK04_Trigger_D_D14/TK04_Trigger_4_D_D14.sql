@@ -1,6 +1,4 @@
--- ============================================================
 -- TK04 - Trigger #4: Validasi Promotion saat digunakan ke Order
--- ============================================================
 
 -- 1. Function
 CREATE OR REPLACE FUNCTION validate_promotion_on_order()

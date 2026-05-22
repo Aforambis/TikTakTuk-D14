@@ -1,5 +1,8 @@
-# Kebutuhan utama proyek
 Django>=4.2,<6.0
 
-# Jika nanti butuh koneksi database PostgreSQL, hilangkan tanda pagar di bawah ini
 psycopg2-binary
+dj-database-url
+python-dotenv
+
+gunicorn
+whitenoise

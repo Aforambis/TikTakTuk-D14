@@ -1,11 +1,8 @@
--- ============================================================
--- TK04 - Trigger #5 (Wajib Kelompok)
+-- TK04 - Trigger #5
 -- Part 1: Cek keterikatan Seat sebelum dihapus
 -- Part 2: Cek kuota Ticket Category sebelum buat Tiket baru
--- ============================================================
 
-
--- ─── PART 1: Cek has_relationship sebelum DELETE seat ────────────────────────
+-- PART 1: Cek has_relationship sebelum DELETE seat
 
 CREATE OR REPLACE FUNCTION check_seat_before_delete()
 RETURNS TRIGGER AS $$
@@ -34,7 +31,7 @@ FOR EACH ROW
 EXECUTE FUNCTION check_seat_before_delete();
 
 
--- ─── PART 2: Cek kuota ticket_category sebelum INSERT ticket ─────────────────
+-- PART 2: Cek kuota ticket_category sebelum INSERT ticket 
 
 CREATE OR REPLACE FUNCTION check_ticket_quota_before_insert()
 RETURNS TRIGGER AS $$
