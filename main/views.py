@@ -6,7 +6,7 @@ from collections import Counter
 from decimal import Decimal
 
 from django import forms
-from django.contrib import messagesw
+from django.contrib import messages
 from django.db.models import Count, Q, Sum
 from django.http import Http404, HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
