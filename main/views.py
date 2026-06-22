@@ -22,45 +22,41 @@ from django.db import connection, DatabaseError
 ALLOWED_ROLES = {"guest", "admin", "organizer", "customer"}
 LOGIN_ROLES = {"admin", "organizer", "customer"}
 
-
 # =========================================================
 # Auth + role helpers
 # =========================================================
 
 def _authenticate_dummy_account(request, username: str, password: str):
+    from .models import UserAccount, AccountRole
+
     username = (username or "").strip()
     password = (password or "").strip()
 
     if not username or not password:
         return None
 
-    data = get_data()
-    credentials = data.get("user_credentials", {})
-    registered_accounts = request.session.get("registered_accounts", {})
-    credentials = {**credentials, **registered_accounts}
+    try:
+        user = UserAccount.objects.get(username__iexact=username)
+    except UserAccount.DoesNotExist:
+        return None
 
-    # Username dibuat case-insensitive agar input seperti "Admin" tetap valid.
-    for stored_username, account in credentials.items():
-        if stored_username.lower() != username.lower():
-            continue
+    if user.password != password:
+        return None
 
-        if account.get("password") != password:
-            return None
+    # Ambil role dari database
+    account_role = AccountRole.objects.filter(user=user).select_related("role").first()
+    if not account_role:
+        return None
 
-        role = str(account.get("role", "customer")).strip().lower()
-        if role not in LOGIN_ROLES:
-            return None
+    role = account_role.role.role_name.strip().lower()
+    if role not in LOGIN_ROLES:
+        return None
 
-        return {
-            "username": stored_username,
-            "role": role,
-            "name": account.get("name") or stored_username,
-        }
-
-    return None
-
-
-
+    return {
+        "username": user.username,
+        "role": role,
+        "name": user.username,
+    }
 def _clear_auth_session(request):
     for key in ("role", "username", "display_name", "organizer_id", "customer_id"):
         request.session.pop(key, None)
@@ -1368,9 +1364,8 @@ def order_list(request):
     form = OrderFilterForm(request.GET)
     form.is_valid()
 
-    qs = Order.objects.select_related("customer").order_by("-order_date")
-
     role = _current_role(request)
+    qs = Order.objects.select_related("customer").order_by("-order_date")
 
     if role == "customer":
         customer = _get_current_customer(request)
@@ -1388,9 +1383,20 @@ def order_list(request):
 
     q = (form.cleaned_data.get("q") or "").strip()
     if q:
-        qs = qs.filter(order_id__icontains=q)
+        qs = qs.filter(
+            Q(order_id__icontains=q) | Q(customer__full_name__icontains=q)
+        )
 
-    summary = qs.aggregate(
+    # Use separate base queryset for accurate summary (unaffected by search/filter)
+    base_qs = Order.objects.select_related("customer")
+    if role == "customer":
+        base_qs = base_qs.filter(customer=_get_current_customer(request))
+    elif role == "organizer":
+        base_qs = base_qs.filter(
+            tickets__category__event__organizer=_get_current_organizer(request)
+        ).distinct()
+
+    summary = base_qs.aggregate(
         total_orders=Count("order_id", distinct=True),
         paid_orders=Count(
             "order_id",
@@ -1469,7 +1475,7 @@ def delete_order(request, order_id):
 def checkout(request, event_id):
     _require_roles(request, {"customer"})
 
-    from .models import Event, Order, Promotion, Ticket, TicketCategory
+    from .models import Event, Order, OrderPromotion, Promotion, Ticket, TicketCategory
 
     event = get_object_or_404(
         Event.objects.select_related("venue", "organizer")
@@ -1477,7 +1483,6 @@ def checkout(request, event_id):
         event_id=event_id,
     )
     customer = _get_current_customer(request)
-
     categories = event.ticket_categories.order_by("category_name")
 
     if request.method == "POST":
@@ -1492,31 +1497,58 @@ def checkout(request, event_id):
 
             qty = form.cleaned_data["quantity"]
             subtotal = (category.price or Decimal("0.00")) * qty
-
             discount = Decimal("0.00")
+            promo_obj = None
             promo_code = (form.cleaned_data.get("promo_code") or "").strip()
 
             if promo_code:
-                today = timezone.localdate()
-
-                promo = Promotion.objects.filter(
+                # Check 1: Promotion exists
+                promo_obj = Promotion.objects.filter(
                     promo_code__iexact=promo_code,
-                    start_date__lte=today,
-                    end_date__gte=today,
                 ).first()
 
-                if promo:
-                    if promo.discount_type == "NOMINAL":
-                        discount = min(Decimal(promo.discount_value), subtotal)
+                if not promo_obj:
+                    messages.error(
+                        request,
+                        f'ERROR: Promotion dengan ID {promo_code} tidak ditemukan.',
+                    )
+                    return render(request, "orders/checkout.html", {
+                        "event": event, "categories": categories, "form": form,
+                        "current_role": _current_role(request), "role": _current_role(request),
+                    })
 
-                    elif promo.discount_type == "PERCENTAGE":
-                        discount = (
-                            subtotal
-                            * Decimal(promo.discount_value)
-                            / Decimal("100")
-                        ).quantize(Decimal("0.01"))
+                # Check 2: Usage limit not exceeded
+                usage_count = OrderPromotion.objects.filter(promotion=promo_obj).count()
+                if usage_count >= promo_obj.usage_limit:
+                    messages.error(
+                        request,
+                        f'ERROR: Promotion "{promo_obj.promo_code}" telah mencapai batas maksimum penggunaan.',
+                    )
+                    return render(request, "orders/checkout.html", {
+                        "event": event, "categories": categories, "form": form,
+                        "current_role": _current_role(request), "role": _current_role(request),
+                    })
 
-                        discount = min(discount, subtotal)
+                # Check 3: Event date within promotion period
+                event_date = event.event_datetime.date()
+                if not (promo_obj.start_date <= event_date <= promo_obj.end_date):
+                    messages.error(
+                        request,
+                        f'ERROR: Promotion "{promo_obj.promo_code}" tidak berlaku untuk tanggal event ini.',
+                    )
+                    return render(request, "orders/checkout.html", {
+                        "event": event, "categories": categories, "form": form,
+                        "current_role": _current_role(request), "role": _current_role(request),
+                    })
+
+                # Apply discount
+                if promo_obj.discount_type == "NOMINAL":
+                    discount = min(Decimal(promo_obj.discount_value), subtotal)
+                elif promo_obj.discount_type == "PERCENTAGE":
+                    discount = (
+                        subtotal * Decimal(promo_obj.discount_value) / Decimal("100")
+                    ).quantize(Decimal("0.01"))
+                    discount = min(discount, subtotal)
 
             total = (subtotal - discount).quantize(Decimal("0.01"))
 
@@ -1530,16 +1562,14 @@ def checkout(request, event_id):
             tickets = []
             for _ in range(qty):
                 code = f"TKT-{secrets.token_hex(4).upper()}"
-                tickets.append(
-                    Ticket(
-                        ticket_code=code,
-                        category=category,
-                        order=order,
-                    )
-                )
-
+                tickets.append(Ticket(ticket_code=code, category=category, order=order))
             Ticket.objects.bulk_create(tickets)
 
+            # Create OrderPromotion record if promo was used
+            if promo_obj:
+                OrderPromotion.objects.create(promotion=promo_obj, order=order)
+
+            messages.success(request, "Pesanan berhasil dibuat!")
             return redirect("order_list")
     else:
         form = CheckoutForm()
@@ -1584,7 +1614,7 @@ def _promo_type_to_label(value: str) -> str:
 
 
 def promotions_page(request):
-    from .models import Promotion
+    from .models import OrderPromotion, Promotion
 
     role = _current_role(request)
 
@@ -1599,6 +1629,11 @@ def promotions_page(request):
     if type_filter and type_filter != "Semua":
         qs = qs.filter(discount_type=_promo_type_to_db(type_filter))
 
+    # Real usage_count from OrderPromotion table
+    usage_counts = {}
+    for op in OrderPromotion.objects.values("promotion_id").annotate(cnt=Count("promotion_id")):
+        usage_counts[str(op["promotion_id"])] = op["cnt"]
+
     rows = []
     for promo in qs:
         rows.append(
@@ -1610,12 +1645,12 @@ def promotions_page(request):
                 "start_date": promo.start_date,
                 "end_date": promo.end_date,
                 "usage_limit": promo.usage_limit,
-                "usage_count": 0,
+                "usage_count": usage_counts.get(str(promo.promotion_id), 0),
             }
         )
 
     all_promos = Promotion.objects.all()
-    total_usage = 0
+    total_usage = OrderPromotion.objects.count()
     percentage_count = all_promos.filter(discount_type="PERCENTAGE").count()
 
     context = {

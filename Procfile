@@ -1,0 +1,1 @@
+web: gunicorn tiktaktuk.wsgi --log-file -

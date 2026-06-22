@@ -4,7 +4,6 @@ from django.core.validators import DecimalValidator, MinValueValidator
 from django.db import models
 from django.db.models import CheckConstraint, F, Q, UniqueConstraint
 
-
 class UserAccount(models.Model):
     user_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     username = models.CharField(max_length=100, unique=True)
@@ -15,7 +14,6 @@ class UserAccount(models.Model):
 
     def __str__(self) -> str:
         return self.username
-
 
 class Role(models.Model):
     role_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -176,7 +174,11 @@ class Order(models.Model):
 
     order_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     order_date = models.DateTimeField()
-    payment_status = models.CharField(max_length=20, choices=PaymentStatus.choices)
+    payment_status = models.CharField(
+        max_length=20,
+        choices=PaymentStatus.choices,
+        default=PaymentStatus.PENDING,
+    )
     total_amount = models.DecimalField(
         max_digits=12,
         decimal_places=2,
